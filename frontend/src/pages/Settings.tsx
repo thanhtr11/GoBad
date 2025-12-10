@@ -49,6 +49,13 @@ const Settings: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState<'SUPER_ADMIN' | 'MANAGER' | 'MEMBER' | 'GUEST'>('MEMBER');
   const [newUserSkillLevel, setNewUserSkillLevel] = useState('');
 
+  // Password reset modal state
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null);
+  const [passwordResetUsername, setPasswordResetUsername] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
   // Manager assignment state
   const [selectedClubForManager, setSelectedClubForManager] = useState<string | null>(null);
   const [selectedManagerUser, setSelectedManagerUser] = useState<string | null>(null);
@@ -166,12 +173,17 @@ const Settings: React.FC = () => {
 
   // Reset password mutation
   const resetPasswordMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await api.post(`/users/${userId}/reset-password`, {});
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const response = await api.post(`/users/${userId}/reset-password`, { newPassword });
       return response.data;
     },
     onSuccess: (data: any) => {
-      alert(data.message || 'Password reset successfully to: Password123!');
+      alert(data.message || 'Password reset successfully');
+      setShowPasswordResetModal(false);
+      setPasswordResetUserId(null);
+      setPasswordResetUsername('');
+      setResetPassword('');
+      setPasswordError('');
       refetchUsers();
     },
     onError: (error: any) => {
@@ -276,9 +288,30 @@ const Settings: React.FC = () => {
   };
 
   const handleResetPassword = async (userId: string, username: string) => {
-    if (window.confirm(`Reset password for @${username}? New password will be: Password123!`)) {
-      await resetPasswordMutation.mutateAsync(userId);
+    setPasswordResetUserId(userId);
+    setPasswordResetUsername(username);
+    setResetPassword('');
+    setPasswordError('');
+    setShowPasswordResetModal(true);
+  };
+
+  const handleConfirmPasswordReset = async () => {
+    if (!resetPassword) {
+      setPasswordError('Password is required');
+      return;
     }
+
+    if (resetPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (!passwordResetUserId) return;
+
+    await resetPasswordMutation.mutateAsync({
+      userId: passwordResetUserId,
+      newPassword: resetPassword,
+    });
   };
 
   const getRoleColor = (role: string) => {
@@ -863,6 +896,77 @@ const Settings: React.FC = () => {
               <div className="space-y-2 text-sm text-gray-600">
                 <p>GoBad Application v1.0.0</p>
                 <p>Last Updated: December 8, 2025</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password Reset Modal */}
+        {showPasswordResetModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Reset Password for @{passwordResetUsername}</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password (minimum 8 characters)
+                  </label>
+                  <input
+                    type="password"
+                    value={resetPassword}
+                    onChange={(e) => {
+                      setResetPassword(e.target.value);
+                      if (e.target.value.length >= 8) {
+                        setPasswordError('');
+                      }
+                    }}
+                    placeholder="Enter new password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {resetPassword && (
+                    <p className={`text-sm mt-1 ${resetPassword.length >= 8 ? 'text-green-600' : 'text-red-600'}`}>
+                      {resetPassword.length} characters {resetPassword.length >= 8 ? '✓' : '(need at least 8)'}
+                    </p>
+                  )}
+                </div>
+
+                {passwordError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                    {passwordError}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
+                  <p className="font-semibold mb-1">Password Requirements:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Minimum 8 characters</li>
+                    <li>Can contain uppercase, lowercase, numbers, and symbols</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-2">
+                <button
+                  onClick={handleConfirmPasswordReset}
+                  disabled={resetPasswordMutation.isPending || resetPassword.length < 8}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPasswordResetModal(false);
+                    setPasswordResetUserId(null);
+                    setPasswordResetUsername('');
+                    setResetPassword('');
+                    setPasswordError('');
+                  }}
+                  disabled={resetPasswordMutation.isPending}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50 font-medium"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>

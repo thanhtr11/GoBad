@@ -139,6 +139,11 @@ export async function findUserByUsername(username: string) {
 }
 
 export async function resetPassword(id: string, newPassword: string) {
+  // Validate password length
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters long');
+  }
+
   // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 

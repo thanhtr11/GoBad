@@ -132,12 +132,23 @@ router.post('/:id/reset-password', authMiddleware, checkAdminOrManager, async (r
       return;
     }
 
-    // Default password for reset
-    const defaultPassword = 'Password123!';
+    // Get password from request body, or use default if not provided
+    let newPassword = req.body.newPassword;
+    
+    if (!newPassword) {
+      // Default password for reset (backward compatibility)
+      newPassword = 'Password123!';
+    } else {
+      // Validate custom password
+      if (typeof newPassword !== 'string' || newPassword.length < 8) {
+        res.status(400).json({ error: 'Password must be at least 8 characters long' });
+        return;
+      }
+    }
 
-    const updatedUser = await userService.resetPassword(req.params.id, defaultPassword);
+    const updatedUser = await userService.resetPassword(req.params.id, newPassword);
     res.json({ 
-      message: `Password reset successfully. New password is: ${defaultPassword}`,
+      message: `Password reset successfully`,
       user: updatedUser 
     });
   } catch (error: any) {
