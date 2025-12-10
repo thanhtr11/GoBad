@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gobad_password}
       POSTGRES_DB: ${POSTGRES_DB:-gobad_db}
     ports:
-      - "5432:5432"
+      - "0.0.0.0:5432:5432"
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     healthcheck:
@@ -33,7 +33,7 @@ services:
     container_name: gobad_backend_prod
     restart: always
     ports:
-      - "${BACKEND_PORT:-5983}:5000"
+      - "0.0.0.0:${BACKEND_PORT:-5983}:5000"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-gobad}:${POSTGRES_PASSWORD:-gobad_password}@db:5432/${POSTGRES_DB:-gobad_db}
@@ -57,7 +57,7 @@ services:
     container_name: gobad_frontend_prod
     restart: always
     ports:
-      - "${SERVER_PORT:-3865}:3000"
+      - "0.0.0.0:${SERVER_PORT:-3865}:3000"
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://192.168.88.14:5983/api}
     depends_on:
