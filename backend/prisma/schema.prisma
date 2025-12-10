@@ -1,0 +1,296 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CLUBS
+// ============================================
+model Club {
+  id          String   @id @default(uuid())
+  name        String
+  location    String?
+  contactName String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     Member[]
+  practices   Practice[]
+  finances    Finance[]
+  tournaments Tournament[]
+  managers    ClubManager[]
+
+  @@map("clubs")
+}
+
+// ============================================
+// CLUB MANAGERS (Role-based permissions)
+// ============================================
+model ClubManager {
+  id        String   @id @default(uuid())
+  userId    String
+  clubId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club  @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+  @@index([userId])
+  @@index([clubId])
+  @@map("club_managers")
+}
+
+// ============================================
+// USERS & AUTHENTICATION (Combined with Member data)
+// ============================================
+model User {
+  id             String         @id @default(uuid())
+  username       String         @unique
+  email          String?        @unique
+  password       String         // Hashed with bcrypt
+  name           String         // Display name
+  phone          String?
+  role           UserRole       @default(MEMBER)
+  skillLevel     SkillLevel     @default(INTERMEDIATE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  clubMemberships Member[]
+  managedClubs    ClubManager[]
+
+  @@index([role])
+  @@index([email])
+  @@index([skillLevel])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MANAGER
+  MEMBER
+  GUEST
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MembershipTier {
+  ADULT
+  JUNIOR
+  FAMILY
+}
+
+// ============================================
+// CLUB MEMBERSHIP (Junction table for User-Club many-to-many)
+// ============================================
+model Member {
+  id            String       @id @default(uuid())
+  userId        String
+  clubId        String
+  status        MemberStatus @default(ACTIVE)
+  type          MemberType   @default(MEMBER)
+  membershipTier MembershipTier @default(ADULT)
+  checkedInById String?      // For guests - which member checked them in
+  joinedAt      DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relations
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club             Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  checkedInBy      Member?  @relation("GuestCheckedIn", fields: [checkedInById], references: [id])
+  checkedInGuests  Member[] @relation("GuestCheckedIn")
+  matchesAsPlayer1 Match[]      @relation("Player1")
+  matchesAsPlayer2 Match[]      @relation("Player2")
+  matchesAsPlayer3 Match[]      @relation("Player3")
+  matchesAsPlayer4 Match[]      @relation("Player4")
+  attendance       Attendance[]
+
+  @@unique([userId, clubId])
+  @@index([clubId])
+  @@index([userId])
+  @@index([clubId, status])
+  @@index([clubId, type])
+  @@map("club_members")
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum MemberType {
+  MEMBER
+  GUEST
+}
+
+// ============================================
+// PRACTICE SCHEDULING
+// ============================================
+model Practice {
+  id                   String   @id @default(uuid())
+  clubId               String
+  date                 DateTime
+  startTime            DateTime
+  endTime              DateTime
+  court                String
+  expectedParticipants Int?
+  isTournament         Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  club       Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  matches    Match[]
+  attendance Attendance[]
+  tournament Tournament?
+
+  @@index([clubId])
+  @@index([date])
+  @@map("practices")
+}
+
+// ============================================
+// MATCH RESULTS
+// ============================================
+model Match {
+  id         String    @id @default(uuid())
+  practiceId String
+  player1Id  String
+  player2Id  String
+  player3Id  String?   // For doubles: team 1 second player
+  player4Id  String?   // For doubles: team 2 second player
+  matchType  MatchType
+  score1     Int
+  score2     Int
+  court      String
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  player1  Member   @relation("Player1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2  Member   @relation("Player2", fields: [player2Id], references: [id], onDelete: Cascade)
+  player3  Member?  @relation("Player3", fields: [player3Id], references: [id], onDelete: Cascade)
+  player4  Member?  @relation("Player4", fields: [player4Id], references: [id], onDelete: Cascade)
+
+  @@index([practiceId])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([player3Id])
+  @@index([player4Id])
+  @@map("matches")
+}
+
+enum MatchType {
+  SINGLES
+  DOUBLES
+}
+
+// ============================================
+// FINANCIAL MANAGEMENT
+// ============================================
+model Finance {
+  id          String          @id @default(uuid())
+  clubId      String
+  type        FinanceType
+  category    FinanceCategory
+  amount      Decimal         @db.Decimal(10, 2)
+  currency    String          @default("VND")
+  date        DateTime
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
+  @@index([date])
+  @@map("finances")
+}
+
+enum FinanceType {
+  INCOME
+  EXPENSE
+}
+
+enum FinanceCategory {
+  MEMBERSHIP_FEE
+  DONATION
+  EQUIPMENT
+  COURT_RENTAL
+  MAINTENANCE
+  OTHER
+}
+
+// ============================================
+// ATTENDANCE TRACKING
+// ============================================
+model Attendance {
+  id         String   @id @default(uuid())
+  practiceId String
+  memberId   String
+  checkInAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  // Relations
+  practice Practice    @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([practiceId, memberId])
+  @@index([practiceId])
+  @@index([memberId])
+  @@map("attendance")
+}
+
+// ============================================
+// TOURNAMENT MODE
+// ============================================
+model Tournament {
+  id         String           @id @default(uuid())
+  clubId     String
+  practiceId String           @unique
+  name       String
+  format     TournamentFormat
+  status     TournamentStatus @default(UPCOMING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relations
+  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
+  @@map("tournaments")
+}
+
+enum TournamentFormat {
+  KNOCKOUT
+  ROUND_ROBIN
+}
+
+enum TournamentStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+}

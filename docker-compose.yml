@@ -1,0 +1,100 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: gobad_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gobad
+      POSTGRES_PASSWORD: gobad_password
+      POSTGRES_DB: gobad_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gobad"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gobad-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gobad_backend
+    restart: unless-stopped
+    ports:
+      - "5983:5000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://gobad:gobad_password@db:5432/gobad_db
+      JWT_SECRET: your_jwt_secret_change_in_production
+      JWT_EXPIRES_IN: 7d
+      PORT: 5000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - gobad-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gobad_frontend
+    restart: unless-stopped
+    ports:
+      - "3865:3000"
+    environment:
+      VITE_API_URL: http://localhost:5983/api
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - gobad-network
+
+  # Prisma Studio (Optional - for database GUI)
+  prisma-studio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gobad_prisma_studio
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://gobad:gobad_password@db:5432/gobad_db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/prisma:/app/prisma
+    command: npx prisma studio --browser none --port 5555 --hostname 0.0.0.0
+    networks:
+      - gobad-network
+
+volumes:
+  postgres_data:
+
+networks:
+  gobad-network:
+    driver: bridge

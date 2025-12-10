@@ -1,0 +1,509 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import { useClub } from '../context/ClubContext';
+
+interface Club {
+  id: string;
+  name: string;
+  location?: string;
+  contactName?: string;
+  email?: string;
+  description?: string;
+  _count?: {
+    members: number;
+    practices: number;
+    finances: number;
+  };
+}
+
+interface ClubMember {
+  id: string;
+  email: string;
+  name: string;
+  skillLevel: string;
+  joinedAt: string;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+}
+
+const Settings: React.FC = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { setSelectedClubId } = useClub();
+  const [activeTab, setActiveTab] = useState<'clubs' | 'system'>('clubs');
+  const [showNewClubForm, setShowNewClubForm] = useState(false);
+  const [newClubName, setNewClubName] = useState('');
+  const [newClubDesc, setNewClubDesc] = useState('');
+
+  // Fetch clubs
+  const { data: clubs = [], refetch: refetchClubs } = useQuery<Club[]>({
+    queryKey: ['clubs-settings'],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/clubs', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch clubs');
+      const data = await response.json();
+      return data.clubs || [];
+    },
+  });
+
+  // Create club mutation
+  const createClubMutation = useMutation({
+    queryKey: ['club-members-settings', selectedClubId],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/members/club/${selectedClubId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch members');
+      const data = await response.json();
+      return data.members || [];
+    },
+    enabled: !!selectedClubId,
+  });
+
+  // Create club mutation
+  const createClubMutation = useMutation({
+    mutationFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/clubs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newClubName,
+          description: newClubDesc,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create club');
+      return response.json();
+    },
+    onSuccess: () => {
+      setNewClubName('');
+      setNewClubDesc('');
+      setShowNewClubForm(false);
+      refetchClubs();
+    },
+  });
+
+  const handleCreateClub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createClubMutation.mutateAsync();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-2 text-gray-600">Manage your clubs and preferences</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8 border-b">
+          {(['clubs', 'system'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as 'clubs' | 'system')}
+              className={`px-4 py-2 font-medium border-b-2 transition ${
+                activeTab === tab
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {tab === 'clubs' && '🏢 Clubs'}
+              {tab === 'system' && '⚙️ System'}
+            </button>
+          ))}
+        </div>
+
+        {/* Clubs Tab */}
+        {activeTab === 'clubs' && (
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          clubId: selectedClubId,
+          name: newMemberName,
+          email: newMemberEmail || undefined,
+          phone: newMemberPhone || undefined,
+          skillLevel: newMemberSkillLevel,
+          type: 'MEMBER',
+          joinedAt: newMemberJoinedAt || undefined,
+          username: createUserAccount ? newMemberUsername : undefined,
+          password: createUserAccount ? newMemberPassword : undefined,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create member');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setNewMemberName('');
+      setNewMemberEmail('');
+      setNewMemberPhone('');
+      setNewMemberSkillLevel('INTERMEDIATE');
+      setNewMemberJoinedAt('');
+      setNewMemberUsername('');
+      setNewMemberPassword('');
+      setCreateUserAccount(false);
+      setShowAddMemberForm(false);
+      // Refetch members
+      queryClient.invalidateQueries({ queryKey: ['club-members-settings', selectedClubId] });
+    },
+    onError: (error: any) => {
+      alert(error.message || 'Failed to add member');
+    },
+  });
+
+  // Update member mutation
+  const updateMemberMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingMember) return;
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/members/${editingMember.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newMemberName,
+          email: newMemberEmail || undefined,
+          phone: newMemberPhone || undefined,
+          skillLevel: newMemberSkillLevel,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update member');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setEditingMember(null);
+      setShowEditMemberForm(false);
+      setNewMemberName('');
+      setNewMemberEmail('');
+      setNewMemberPhone('');
+      setNewMemberSkillLevel('INTERMEDIATE');
+      queryClient.invalidateQueries({ queryKey: ['club-members-settings', selectedClubId] });
+    },
+    onError: (error: any) => {
+      alert(error.message || 'Failed to update member');
+    },
+  });
+
+  // Delete member mutation
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/members/${memberId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete member');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['club-members-settings', selectedClubId] });
+    },
+    onError: (error: any) => {
+      alert(error.message || 'Failed to delete member');
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ memberId, password }: { memberId: string; password: string }) => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/members/${memberId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword: password }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to reset password');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setResetPasswordMemberId(null);
+      setNewPassword('');
+      alert('Password reset successfully');
+    },
+    onError: (error: any) => {
+      alert(error.message || 'Failed to reset password');
+    },
+  });
+
+  const handleCreateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberName.trim()) {
+      alert('Member name is required');
+      return;
+    }
+    if (createUserAccount) {
+      if (!newMemberUsername || newMemberUsername.length < 3) {
+        alert('Username must be at least 3 characters');
+        return;
+      }
+      if (!newMemberPassword || newMemberPassword.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+      }
+    }
+    await createMemberMutation.mutateAsync();
+  };
+
+  const handleEditMember = (member: ClubMember) => {
+    setEditingMember(member);
+    setNewMemberName(member.name);
+    setNewMemberEmail(member.email || '');
+    setNewMemberPhone('');
+    setNewMemberSkillLevel(member.skillLevel);
+    setShowEditMemberForm(true);
+    setShowAddMemberForm(false);
+    setResetPasswordMemberId(null);
+    setNewPassword('');
+  };
+
+  const handleUpdateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberName.trim()) {
+      alert('Member name is required');
+      return;
+    }
+    await updateMemberMutation.mutateAsync();
+  };
+
+  const handleDeleteMember = async (memberId: string, memberName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${memberName}? This action cannot be undone.`)) {
+      await deleteMemberMutation.mutateAsync(memberId);
+    }
+  };
+
+  const handleResetPassword = async (memberId: string) => {
+    if (!newPassword || newPassword.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+    if (window.confirm('Are you sure you want to reset this member\'s password?')) {
+      await resetPasswordMutation.mutateAsync({ memberId, password: newPassword });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-2 text-gray-600">Manage your clubs, members, and preferences</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8 border-b">
+          {(['clubs', 'system'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as 'clubs' | 'system')}
+              className={`px-4 py-2 font-medium border-b-2 transition ${
+                activeTab === tab
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {tab === 'clubs' && '🏢 Clubs'}
+              {tab === 'system' && '⚙️ System'}
+            </button>
+          ))}
+        </div>
+
+        {/* Clubs Tab */}
+        {activeTab === 'clubs' && (
+          <div className="space-y-6">
+            {/* New Club Form */}
+            {showNewClubForm && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New Club</h3>
+                <form onSubmit={handleCreateClub} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Club Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newClubName}
+                      onChange={(e) => setNewClubName(e.target.value)}
+                      placeholder="Enter club name"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={newClubDesc}
+                      onChange={(e) => setNewClubDesc(e.target.value)}
+                      placeholder="Optional description"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={createClubMutation.isPending}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {createClubMutation.isPending ? 'Creating...' : 'Create Club'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewClubForm(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Clubs List */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">Your Clubs</h3>
+                <button
+                  onClick={() => setShowNewClubForm(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  + New Club
+                </button>
+              </div>
+
+              {clubs.map((club) => (
+                <div key={club.id} className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-lg font-semibold text-gray-900">{club.name}</h4>
+                      {club.location && (
+                        <p className="text-gray-600 mt-1">{club.location}</p>
+                      )}
+                      {club.email && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Contact: {club.email}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1">
+                        Members: {club._count?.members || 0}
+                      </p>
+                    </div>
+                    <a
+                      href="/members"
+                      onClick={() => setSelectedClubId(club.id)}
+                      className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition inline-block"
+                    >
+                      Manage Members →
+                    </a>
+                  </div>
+                </div>
+              ))}
+
+              {clubs.length === 0 && (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <p className="text-gray-500 mb-4">No clubs yet</p>
+                  <button
+                    onClick={() => setShowNewClubForm(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Create Your First Club
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* System Tab */}
+        {activeTab === 'system' && (
+          <div className="space-y-6">
+            {/* Account Info */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Member</p>
+                  <p className="text-gray-900 font-medium">@{user?.username}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Account Type</p>
+                  <p className="text-gray-900 font-medium">Administrator</p>
+                </div>
+              </div>
+            </div>
+
+            {/* System Status */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-gray-900">Backend API</span>
+                  <span className="text-green-600 font-medium">✓ Online</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-gray-900">Database</span>
+                  <span className="text-green-600 font-medium">✓ Connected</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-gray-900">Authentication</span>
+                  <span className="text-green-600 font-medium">✓ Active</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Version Info */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Version Information</h3>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>GoBad Application v1.0.0</p>
+                <p>Build: Phase 13 (Dashboard & Integration)</p>
+                <p>Last Updated: December 5, 2025</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Settings;
