@@ -113,11 +113,13 @@ export async function addMemberToClub(data: {
 /**
  * Create a guest member for a practice
  * Guest members are temporary members created for single practice sessions
+ * Guest name will include who created it
  */
 export async function createGuestMember(data: {
   name: string;
   skillLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
   practiceId: string;
+  createdBy?: string; // Username or name of who created the guest
 }) {
   // First, get the practice to find the club
   const practice = await prisma.practice.findUnique({
@@ -129,11 +131,16 @@ export async function createGuestMember(data: {
     throw new Error('Practice not found');
   }
 
+  // Format guest name to show who created it
+  const guestDisplayName = data.createdBy 
+    ? `${data.name} (added by ${data.createdBy})`
+    : data.name;
+
   // Create a guest user account
   const guestUser = await prisma.user.create({
     data: {
       username: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: data.name,
+      name: guestDisplayName,
       email: `guest_${Date.now()}@gobad.local`,
       password: 'guest_temp_password',
       role: 'GUEST',
@@ -163,6 +170,38 @@ export async function createGuestMember(data: {
   });
 
   return guestMember;
+}
+
+/**
+ * Convert guest member to regular member and remove the guest
+ */
+export async function convertGuestToMember(memberId: string) {
+  // Get the guest member details
+  const guestMember = await prisma.member.findUnique({
+    where: { id: memberId },
+    include: { user: true },
+  });
+
+  if (!guestMember) {
+    throw new Error('Guest member not found');
+  }
+
+  if (guestMember.type !== 'GUEST') {
+    throw new Error('Member is not a guest');
+  }
+
+  // Update the member type to MEMBER
+  await prisma.member.update({
+    where: { id: memberId },
+    data: { type: 'MEMBER' },
+  });
+
+  // Delete the temporary guest user
+  await prisma.user.delete({
+    where: { id: guestMember.userId },
+  });
+
+  return { success: true, message: 'Guest converted to member and guest account removed' };
 }
 
 /**
