@@ -1,0 +1,78 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: gobad_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gobad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gobad_password}
+      POSTGRES_DB: ${POSTGRES_DB:-gobad_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gobad}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gobad-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend API
+  backend:
+    image: thanhtr/gobad-backend:latest
+    container_name: gobad_backend_prod
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-5983}:5000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gobad}:${POSTGRES_PASSWORD:-gobad_password}@db:5432/${POSTGRES_DB:-gobad_db}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 5000
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gobad-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend React App
+  frontend:
+    image: thanhtr/gobad-frontend:latest
+    container_name: gobad_frontend_prod
+    restart: always
+    ports:
+      - "${SERVER_PORT:-3865}:3000"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://192.168.88.14:5983/api}
+    depends_on:
+      - backend
+    networks:
+      - gobad-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data_prod:
+
+networks:
+  gobad-network:
+    driver: bridge

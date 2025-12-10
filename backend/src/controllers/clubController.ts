@@ -82,7 +82,7 @@ class ClubController {
 
   /**
    * GET /api/clubs/:id
-   * Get specific club details (must be member of club)
+   * Get specific club details (must be member of club or be SUPER_ADMIN)
    */
   async getClubById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -93,8 +93,8 @@ class ClubController {
         throw new HTTPError('Unauthorized', 401);
       }
 
-      // Check club isolation (user must be member of club)
-      const hasAccess = req.userRole === 'ADMIN' || (await clubService.hasClubAccess(userId, id));
+      // Check club isolation (user must be member of club or be SUPER_ADMIN)
+      const hasAccess = req.user?.role === 'SUPER_ADMIN' || (await clubService.hasClubAccess(userId, id));
 
       if (!hasAccess) {
         throw new HTTPError('You do not have access to this club', 403);
@@ -113,7 +113,7 @@ class ClubController {
 
   /**
    * PUT /api/clubs/:id
-   * Update club (Admin or club member)
+   * Update club (Admin or SUPER_ADMIN or club member)
    */
   async updateClub(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -124,8 +124,8 @@ class ClubController {
         throw new HTTPError('Unauthorized', 401);
       }
 
-      // Check club isolation
-      const hasAccess = req.userRole === 'ADMIN' || (await clubService.hasClubAccess(userId, id));
+      // Check club isolation (user must be member of club or be SUPER_ADMIN)
+      const hasAccess = req.user?.role === 'SUPER_ADMIN' || (await clubService.hasClubAccess(userId, id));
 
       if (!hasAccess) {
         throw new HTTPError('You do not have access to this club', 403);
@@ -177,10 +177,10 @@ class ClubController {
       }
 
       const userId = req.user.userId;
-      const isAdmin = req.user.role === 'ADMIN';
+      const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
 
-      // Check club isolation
-      const hasAccess = isAdmin || (await clubService.hasClubAccess(userId, id));
+      // Check club isolation (user must be member of club or be SUPER_ADMIN)
+      const hasAccess = isSuperAdmin || (await clubService.hasClubAccess(userId, id));
 
       if (!hasAccess) {
         throw new HTTPError('You do not have access to this club', 403);
@@ -211,10 +211,10 @@ class ClubController {
       }
 
       const userId = req.user.userId;
-      const isAdmin = req.user.role === 'ADMIN';
+      const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
 
-      // Check club isolation
-      const hasAccess = isAdmin || (await clubService.hasClubAccess(userId, id));
+      // Check club isolation (user must be member of club or be SUPER_ADMIN)
+      const hasAccess = isSuperAdmin || (await clubService.hasClubAccess(userId, id));
 
       if (!hasAccess) {
         throw new HTTPError('You do not have access to this club', 403);

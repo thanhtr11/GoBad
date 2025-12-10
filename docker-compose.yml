@@ -58,7 +58,7 @@ services:
     container_name: gobad_frontend
     restart: unless-stopped
     ports:
-      - "${SERVER_PORT:-3865}:3000"
+      - "${SERVER_PORT:-3865}:5173"
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:5983/api}
     depends_on:
@@ -67,7 +67,6 @@ services:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
       - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0
     networks:
       - gobad-network
 
