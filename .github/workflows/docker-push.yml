@@ -52,8 +52,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            thanhtr11/gobad-backend:${{ steps.version.outputs.VERSION }}
-            thanhtr11/gobad-backend:latest
+            thanhtr/gobad-backend:${{ steps.version.outputs.VERSION }}
+            thanhtr/gobad-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
@@ -63,7 +63,7 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            thanhtr11/gobad-frontend:${{ steps.version.outputs.VERSION }}
-            thanhtr11/gobad-frontend:latest
+            thanhtr/gobad-frontend:${{ steps.version.outputs.VERSION }}
+            thanhtr/gobad-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
