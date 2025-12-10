@@ -109,3 +109,58 @@ export async function addMemberToClub(data: {
     },
   });
 }
+
+/**
+ * Create a guest member for a practice
+ * Guest members are temporary members created for single practice sessions
+ */
+export async function createGuestMember(data: {
+  name: string;
+  skillLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  practiceId: string;
+}) {
+  // First, get the practice to find the club
+  const practice = await prisma.practice.findUnique({
+    where: { id: data.practiceId },
+    select: { clubId: true },
+  });
+
+  if (!practice) {
+    throw new Error('Practice not found');
+  }
+
+  // Create a guest user account
+  const guestUser = await prisma.user.create({
+    data: {
+      username: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: data.name,
+      email: `guest_${Date.now()}@gobad.local`,
+      password: 'guest_temp_password',
+      role: 'GUEST',
+      skillLevel: data.skillLevel,
+    },
+  });
+
+  // Add guest to the club
+  const guestMember = await prisma.member.create({
+    data: {
+      userId: guestUser.id,
+      clubId: practice.clubId,
+      type: 'GUEST',
+      status: 'ACTIVE',
+      membershipTier: 'ADULT',
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          skillLevel: true,
+        },
+      },
+    },
+  });
+
+  return guestMember;
+}

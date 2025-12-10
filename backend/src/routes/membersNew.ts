@@ -103,4 +103,27 @@ router.delete('/:id', authMiddleware, requireManager, async (req: Request, res: 
   }
 });
 
+// POST create guest member for practice
+router.post('/create-guest', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, skillLevel, practiceId } = req.body;
+    
+    if (!name || !skillLevel || !practiceId) {
+      res.status(400).json({ error: 'name, skillLevel, and practiceId are required' });
+      return;
+    }
+
+    const guest = await memberService.createGuestMember({
+      name,
+      skillLevel,
+      practiceId,
+    });
+    
+    res.status(201).json(guest);
+  } catch (error: any) {
+    console.error('Error creating guest member:', error);
+    res.status(500).json({ error: error.message || 'Failed to create guest member' });
+  }
+});
+
 export default router;
