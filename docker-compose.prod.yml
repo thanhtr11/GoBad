@@ -43,7 +43,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && npx ts-node prisma/seed.ts && npm start"
+    command: sh -c "npx prisma migrate deploy && npm start"
     networks:
       - gobad-network
     logging:
