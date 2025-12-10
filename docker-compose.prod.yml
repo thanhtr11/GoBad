@@ -29,7 +29,10 @@ services:
 
   # Backend API
   backend:
-    image: thanhtr/gobad-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
     container_name: gobad_backend_prod
     restart: always
     ports:
@@ -43,7 +46,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && npm start"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - /app/node_modules
+    command: sh -c "npx prisma migrate deploy && npm run dev"
     networks:
       - gobad-network
     logging:
