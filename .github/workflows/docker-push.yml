@@ -40,7 +40,7 @@ jobs:
         id: version
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            VERSION=${GITHUB.REF#refs/tags/}
+            VERSION=${GITHUB_REF#refs/tags/}
           else
             VERSION=latest
           fi
