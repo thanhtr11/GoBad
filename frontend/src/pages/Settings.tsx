@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useClub } from '../context/ClubContext';
@@ -71,6 +71,17 @@ const Settings: React.FC = () => {
       return response.data.users || [];
     },
   });
+
+  // Auto-fetch managers for all clubs when clubs load
+  useEffect(() => {
+    if (clubs.length > 0) {
+      clubs.forEach((club) => {
+        if (!clubManagers[club.id]) {
+          fetchClubManagers(club.id);
+        }
+      });
+    }
+  }, [clubs]);
 
   // Create club mutation
   const createClubMutation = useMutation({

@@ -32,6 +32,7 @@ export default function ClubsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const clubIdParam = searchParams.get('id');
   const showNew = searchParams.get('new') === 'true';
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5983/api';
   
   const [selectedClubId, setSelectedClubId] = useState<string>(clubIdParam || '');
   const [activeTab, setActiveTab] = useState<'info' | 'members' | 'managers'>('info');
@@ -59,7 +60,7 @@ export default function ClubsPage() {
     queryKey: ['clubs-management'],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/clubs', {
+      const response = await fetch(`${apiUrl}/clubs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch clubs');
@@ -73,7 +74,7 @@ export default function ClubsPage() {
     queryKey: ['club', selectedClubId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/clubs/${selectedClubId}`, {
+      const response = await fetch(`${apiUrl}/clubs/${selectedClubId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch club');
@@ -87,7 +88,7 @@ export default function ClubsPage() {
     queryKey: ['club-members', selectedClubId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/clubs/${selectedClubId}/members`, {
+      const response = await fetch(`${apiUrl}/clubs/${selectedClubId}/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch members');
@@ -96,11 +97,38 @@ export default function ClubsPage() {
     enabled: !!selectedClubId && activeTab === 'members',
   });
 
+  // Fetch club managers
+  interface Manager {
+    id: string;
+    userId: string;
+    user: {
+      id: string;
+      username: string;
+      name?: string;
+      email?: string;
+      role: string;
+    };
+  }
+
+  const { data: managers = [] } = useQuery<Manager[]>({
+    queryKey: ['club-managers', selectedClubId],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${apiUrl}/clubs/${selectedClubId}/managers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch managers');
+      const data = await response.json();
+      return data.managers || [];
+    },
+    enabled: !!selectedClubId && activeTab === 'managers',
+  });
+
   // Create club mutation
   const createClubMutation = useMutation({
     mutationFn: async (clubData: any) => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/clubs', {
+      const response = await fetch(`${apiUrl}/clubs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -423,7 +451,29 @@ export default function ClubsPage() {
                           + Manage Managers
                         </button>
                       </div>
-                      <p className="text-sm text-gray-600">Click the button above to assign or remove managers for this club.</p>
+                      {managers.length === 0 ? (
+                        <p className="text-gray-500 italic">No managers assigned for this club.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {managers.map((manager) => (
+                            <div
+                              key={manager.userId}
+                              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                            >
+                              <div>
+                                <p className="font-medium text-gray-900">{manager.user.name || manager.user.username}</p>
+                                <p className="text-sm text-gray-600">@{manager.user.username}</p>
+                                {manager.user.email && (
+                                  <p className="text-sm text-gray-600">{manager.user.email}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-gray-700">{manager.user.role}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

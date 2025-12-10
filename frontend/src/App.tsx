@@ -194,20 +194,22 @@ function UserMenu({ user, logout }: { user: any; logout: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showClubsSubmenu, setShowClubsSubmenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5983/api';
 
   // Fetch clubs
   const { data: clubs = [] } = useQuery({
     queryKey: ['clubs-menu'],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/clubs', {
+      if (!token) throw new Error('No auth token');
+      const response = await fetch(`${apiUrl}/clubs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch clubs');
       const data = await response.json();
       return data.clubs || [];
     },
-    enabled: isOpen,
+    enabled: isOpen && !!user,
   });
 
   useEffect(() => {
