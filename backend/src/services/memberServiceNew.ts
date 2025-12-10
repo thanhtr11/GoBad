@@ -164,3 +164,34 @@ export async function createGuestMember(data: {
 
   return guestMember;
 }
+
+/**
+ * Get guests created by a user (for a specific user)
+ */
+export async function getGuestsForUser(userId: string) {
+  return prisma.member.findMany({
+    where: {
+      type: 'GUEST',
+      user: {
+        id: userId,
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          skillLevel: true,
+        },
+      },
+      club: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { joinedAt: 'desc' },
+  });
+}

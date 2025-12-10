@@ -397,6 +397,7 @@ const PracticesPage: React.FC = () => {
                               })}
                             </p>
                             <p className="text-sm text-gray-500">Court: {practice.court}</p>
+                            <p className="text-sm text-blue-600 font-semibold">Attendees: {practice._count?.attendance || 0}</p>
                           </div>
                           <div className="flex gap-2 ml-4">
                             <button
@@ -482,6 +483,12 @@ const PracticesPage: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Court</h3>
                   <p className="text-gray-600">{selectedPractice.court}</p>
+                </div>
+
+                {/* Attendance Count */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Attendance</h3>
+                  <p className="text-2xl font-bold text-blue-600">{selectedPractice._count?.attendance || 0} attendees</p>
                 </div>
 
                 {/* Tournament Badge */}

@@ -32,6 +32,18 @@ router.get('/', authMiddleware, async (req: Request, res: Response): Promise<voi
   }
 });
 
+// GET my guests (guests created by current user) - MUST be before /:id route
+router.get('/my-guests', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = (req as any).user;
+    const guests = await memberService.getGuestsForUser(user.id);
+    res.json({ guests });
+  } catch (error: any) {
+    console.error('Error fetching guests:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch guests' });
+  }
+});
+
 // GET single member by ID
 router.get('/:id', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -127,3 +139,4 @@ router.post('/create-guest', authMiddleware, async (req: Request, res: Response)
 });
 
 export default router;
+
