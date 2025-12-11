@@ -54,19 +54,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: gobad_frontend
     restart: unless-stopped
     ports:
-      - "0.0.0.0:${SERVER_PORT:-3865}:5173"
+      - "0.0.0.0:${SERVER_PORT:-3865}:80"
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:5983/api}
     depends_on:
       - backend
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - /app/node_modules
     networks:
       - gobad-network
 
