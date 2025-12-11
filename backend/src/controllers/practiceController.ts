@@ -228,6 +228,29 @@ class PracticeController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/practices/:id/guests
+   * Get guests for a specific practice
+   */
+  async getPracticeGuests(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+
+      if (!req.user) {
+        throw new HTTPError('Unauthorized', 401);
+      }
+
+      const guests = await practiceService.getPracticeGuests(id);
+
+      res.status(200).json({
+        message: 'Practice guests retrieved successfully',
+        guests,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const practiceController = new PracticeController();

@@ -320,6 +320,58 @@ class PracticeService {
   }
 
   /**
+   * Get guests for a specific practice session
+   * Guests are members with type GUEST who checked in for this practice
+   */
+  async getPracticeGuests(practiceId: string) {
+    // Verify practice exists
+    const practice = await prisma.practice.findUnique({
+      where: { id: practiceId },
+    });
+
+    if (!practice) {
+      throw new NotFoundError('Practice not found');
+    }
+
+    // Get all guests (type GUEST) who checked in for this practice
+    const guests = await prisma.attendance.findMany({
+      where: {
+        practiceId,
+        member: {
+          type: 'GUEST',
+        },
+      },
+      select: {
+        member: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                skillLevel: true,
+              },
+            },
+          },
+        },
+        checkInAt: true,
+      },
+      orderBy: {
+        checkInAt: 'asc',
+      },
+    });
+
+    return guests.map(g => ({
+      id: g.member.user.id,
+      name: g.member.user.name,
+      email: g.member.user.email,
+      skillLevel: g.member.user.skillLevel,
+      checkInAt: g.checkInAt,
+    }));
+  }
+
+  /**
    * Check for scheduling conflicts
    */
   private async checkScheduleConflicts(

@@ -95,4 +95,16 @@ router.get(
   })
 );
 
+/**
+ * GET /api/practices/:id/guests
+ * Get guests for a specific practice
+ */
+router.get(
+  '/:id/guests',
+  clubIsolationMiddleware,
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    await practiceController.getPracticeGuests(req, res, next);
+  })
+);
+
 export default router;
