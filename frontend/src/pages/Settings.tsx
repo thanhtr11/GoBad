@@ -648,13 +648,16 @@ const Settings: React.FC = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Skill Level
                           </label>
-                          <input
-                            type="text"
+                          <select
                             value={newUserSkillLevel}
                             onChange={(e) => setNewUserSkillLevel(e.target.value)}
-                            placeholder="e.g., BEGINNER, INTERMEDIATE, ADVANCED"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
+                          >
+                            <option value="">Select Skill Level</option>
+                            <option value="BEGINNER">BEGINNER</option>
+                            <option value="INTERMEDIATE">INTERMEDIATE</option>
+                            <option value="ADVANCED">ADVANCED</option>
+                          </select>
                         </div>
                       </div>
                       <div>
