@@ -60,7 +60,7 @@ services:
     ports:
       - "0.0.0.0:${SERVER_PORT:-3865}:5173"
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:5983/api}
+      VITE_API_URL: ${VITE_API_URL:-/api}
     depends_on:
       - backend
     networks:
