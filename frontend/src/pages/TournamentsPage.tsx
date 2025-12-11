@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useClub } from '../context/ClubContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 
 interface Tournament {
@@ -30,10 +31,14 @@ interface Practice {
 }
 
 const TournamentsPage: React.FC = () => {
+  const { user } = useAuth();
   const { selectedClubId } = useClub();
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'MANAGER';
 
   // Fetch tournaments for selected club
   const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
@@ -81,6 +86,17 @@ const TournamentsPage: React.FC = () => {
         status: data.status,
       });
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      setSelectedTournament(null);
+    },
+  });
+
+  // Delete tournament mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/tournaments/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tournaments'] });
@@ -292,6 +308,38 @@ const TournamentsPage: React.FC = () => {
                             </button>
                           ))}
                         </div>
+
+                        {/* Delete Button for Admin/Manager */}
+                        {isAdmin && (
+                          <div className="pt-3 border-t border-gray-200">
+                            {deleteConfirm === tournament.id ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    deleteMutation.mutate(tournament.id)
+                                  }
+                                  disabled={deleteMutation.isPending}
+                                  className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+                                >
+                                  {deleteMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirm(null)}
+                                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-400 transition"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDeleteConfirm(tournament.id)}
+                                className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition"
+                              >
+                                Delete Tournament
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
