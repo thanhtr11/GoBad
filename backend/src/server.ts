@@ -53,7 +53,7 @@ const limiter = rateLimit({
 // Strict rate limiting for login attempts
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs (increased for development)
+  max: 500, // Increased for testing
   message: 'Too many login attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -69,7 +69,7 @@ const loginLimiter = rateLimit({
 // Moderate rate limiting for registration
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 100, // Limit each IP to 100 registrations per hour (increased for development)
+  max: 500, // Increased for testing
   message: 'Too many registration attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
