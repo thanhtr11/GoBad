@@ -64,11 +64,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: production
+      target: development
     container_name: gobad_frontend_prod
     restart: always
     ports:
-      - "0.0.0.0:${SERVER_PORT:-3865}:80"
+      - "0.0.0.0:${SERVER_PORT:-3865}:5173"
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://192.168.88.14:5983/api}
     depends_on:
