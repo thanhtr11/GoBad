@@ -11,6 +11,7 @@ interface Member {
     email?: string;
     role?: string;
   };
+  isGuest?: boolean;
 }
 
 interface Practice {
@@ -296,7 +297,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
           <option value="">{members.length === 0 ? 'No players available' : 'Select player'}</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel}) {(member as any).isGuest ? '👥 Guest' : ''}
+              {member.user.name} ({member.user.skillLevel}) {member.isGuest ? '👥 Guest' : ''}
             </option>
           ))}
         </select>
@@ -319,7 +320,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
             .filter(m => m.id !== formData.player1Id)
             .map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel}) {(member as any).isGuest ? '👥 Guest' : ''}
+              {member.user.name} ({member.user.skillLevel}) {member.isGuest ? '👥 Guest' : ''}
             </option>
           ))}
         </select>
