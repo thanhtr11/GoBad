@@ -32,7 +32,10 @@ interface User {
 const Settings: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { setSelectedClubId } = useClub();
-  const [activeTab, setActiveTab] = useState<'clubs' | 'users' | 'system'>('clubs');
+  const [activeTab, setActiveTab] = useState<'clubs' | 'users' | 'profile'>('profile');
+  
+  // Determine if user is admin (has access to clubs and users tabs)
+  const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'MANAGER';
   const [showNewClubForm, setShowNewClubForm] = useState(false);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDesc, setNewClubDesc] = useState('');
@@ -341,21 +344,40 @@ const Settings: React.FC = () => {
 
         {/* Tabs */}
         <div className="flex gap-4 mb-8 border-b">
-          {(['clubs', 'users', 'system'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-medium border-b-2 transition ${
-                activeTab === tab
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {tab === 'clubs' && '🏢 Clubs'}
-              {tab === 'users' && '👤 Users'}
-              {tab === 'system' && '⚙️ System'}
-            </button>
-          ))}
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('clubs')}
+                className={`px-4 py-2 font-medium border-b-2 transition ${
+                  activeTab === 'clubs'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🏢 Clubs
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-2 font-medium border-b-2 transition ${
+                  activeTab === 'users'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                👤 Users
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`px-4 py-2 font-medium border-b-2 transition ${
+              activeTab === 'profile'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            👤 Profile
+          </button>
         </div>
 
         {/* Clubs Tab */}
@@ -856,49 +878,56 @@ const Settings: React.FC = () => {
           </div>
         )}
 
-        {/* System Tab */}
-        {activeTab === 'system' && (
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
           <div className="space-y-6">
-            {/* Account Info */}
+            {/* Personal Information */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Username</p>
-                  <p className="text-gray-900 font-medium">@{currentUser?.username}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Account Type</p>
-                  <p className="text-gray-900 font-medium">Administrator</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Username</p>
+                    <p className="text-gray-900 font-medium">@{currentUser?.username}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Full Name</p>
+                    <p className="text-gray-900 font-medium">{currentUser?.name || 'Not Set'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="text-gray-900 font-medium">{currentUser?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="text-gray-900 font-medium">{currentUser?.phone || 'Not Set'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Skill Level</p>
+                    <p className="text-gray-900 font-medium">{currentUser?.skillLevel || 'Not Set'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Role</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(currentUser?.role || '')}`}>
+                      {currentUser?.role}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* System Status */}
+            {/* Account Status */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Status</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-gray-900">Backend API</span>
-                  <span className="text-green-600 font-medium">✓ Online</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-gray-900">Database</span>
-                  <span className="text-green-600 font-medium">✓ Connected</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-gray-900">Authentication</span>
+                  <span className="text-gray-900">Status</span>
                   <span className="text-green-600 font-medium">✓ Active</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Version Info */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Version Information</h3>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>GoBad Application v1.0.0</p>
-                <p>Last Updated: December 8, 2025</p>
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <span className="text-gray-900">Member Since</span>
+                  <span className="text-blue-600 font-medium">{new Date(currentUser?.createdAt || '').toLocaleDateString()}</span>
+                </div>
               </div>
             </div>
           </div>
