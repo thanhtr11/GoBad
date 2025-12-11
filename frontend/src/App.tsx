@@ -13,6 +13,7 @@ import PracticesPage from './pages/PracticesPage';
 import MatchesPage from './pages/MatchesPage';
 import StatsPage from './pages/StatsPage';
 import FinancesPage from './pages/FinancesPage';
+import TournamentsPage from './pages/TournamentsPage';
 import Settings from './pages/Settings';
 
 // Create a client
@@ -112,6 +113,14 @@ function AppContent() {
         }
       />
       <Route
+        path="/tournaments"
+        element={
+          <ProtectedRoute>
+            <TournamentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
@@ -196,6 +205,15 @@ function NavBar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Finances
+            </a>
+            <a
+              href="/tournaments"
+              className="flex items-center gap-2 text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Tournaments
             </a>
           </div>
 

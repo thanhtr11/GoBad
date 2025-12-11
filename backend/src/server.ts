@@ -13,7 +13,7 @@ import practiceRoutes from './routes/practices';
 import matchRoutes from './routes/matches';
 import statsRoutes from './routes/stats';
 import financeRoutes from './routes/finances';
-// import tournamentRoutes from './routes/tournaments';
+import tournamentRoutes from './routes/tournaments';
 import attendanceRoutes from './routes/attendance';
 
 // Load environment variables
@@ -147,9 +147,8 @@ app.use('/api/matches', matchRoutes);
 // Stats routes - Stats endpoints for player statistics, leaderboards, performance trends
 app.use('/api/stats', statsRoutes);
 
-// TEMPORARILY DISABLED - needs refactoring for new schema
-// // Tournament routes
-// app.use('/api/tournaments', tournamentRoutes);
+// Tournament routes
+app.use('/api/tournaments', tournamentRoutes);
 
 // Finance routes
 app.use('/api/finances', financeRoutes);

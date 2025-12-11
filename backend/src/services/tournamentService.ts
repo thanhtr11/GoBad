@@ -242,7 +242,11 @@ class TournamentService {
           include: {
             club: {
               include: {
-                members: true,
+                members: {
+                  include: {
+                    user: true,
+                  },
+                },
               },
             },
           },
@@ -252,8 +256,11 @@ class TournamentService {
 
     if (!tournament) return null;
 
-    // Get all members from the practice's club
-    return tournament.practice.club.members;
+    // Get all members from the practice's club with user data for names
+    return tournament.practice.club.members.map((member: any) => ({
+      ...member,
+      name: member.user.username,
+    }));
   }
 
   /**
