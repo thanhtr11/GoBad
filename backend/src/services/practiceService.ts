@@ -316,6 +316,11 @@ class PracticeService {
       },
     });
 
+    console.log(`[getPracticeAttendance] Practice ${practiceId}: Found ${attendance.length} attendees`);
+    if (attendance.length > 0) {
+      console.log('[getPracticeAttendance] Attendees:', attendance.map(a => ({ name: a.member.user.name, type: a.member.type })));
+    }
+
     return attendance;
   }
 
@@ -345,6 +350,7 @@ class PracticeService {
         member: {
           select: {
             id: true,
+            type: true,
             user: {
               select: {
                 id: true,
@@ -361,6 +367,11 @@ class PracticeService {
         checkInAt: 'asc',
       },
     });
+
+    console.log(`[getPracticeGuests] Practice ${practiceId}: Found ${guests.length} guests`);
+    if (guests.length > 0) {
+      console.log('[getPracticeGuests] Guests:', guests.map(g => ({ name: g.member.user.name, type: g.member.type })));
+    }
 
     return guests.map(g => ({
       id: g.member.user.id,
