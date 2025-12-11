@@ -23,7 +23,7 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Trust proxy - important for rate limiting with reverse proxy
-app.set('trust proxy', true);
+app.set('trust proxy', 1); // Trust only 1 proxy (Nginx)
 
 // Rate limiting
 const limiter = rateLimit({
@@ -32,6 +32,7 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  trustProxy: 1, // Trust 1 proxy (Nginx)
   skip: (req) => {
     // Skip rate limiting for health checks and local requests (from docker network)
     if (req.path === '/health') return true;
@@ -57,6 +58,7 @@ const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: 1, // Trust 1 proxy (Nginx)
   skip: (req) => {
     // Skip rate limiting for local/internal requests
     const ip = req.ip || req.socket.remoteAddress || '';
@@ -73,6 +75,7 @@ const registerLimiter = rateLimit({
   message: 'Too many registration attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: 1, // Trust 1 proxy (Nginx)
   skip: (req) => {
     // Skip rate limiting for local/internal requests
     const ip = req.ip || req.socket.remoteAddress || '';
