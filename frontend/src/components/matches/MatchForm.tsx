@@ -93,7 +93,6 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
         // Get practice to find club
         const practice = practices.find(p => p.id === formData.practiceId);
         console.log('Selected practice:', practice);
-        console.log('Selected clubId:', selectedClubId);
         
         if (!practice) {
           console.error('Practice not found in practices list');
@@ -102,40 +101,37 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
 
         console.log('Fetching members for clubId:', practice.club.id);
 
-        // Fetch members from the practice's club with clubId parameter
-        const response = await axios.get('/api/members', {
+        // Fetch all members from the practice's club
+        const membersResponse = await axios.get('/api/members', {
           params: { clubId: practice.club.id },
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log('Members API full response:', response);
-        console.log('Members API response data:', response.data);
-        
         // Handle both response formats
         let allMembers: Member[] = [];
-        if (Array.isArray(response.data)) {
-          // If response.data is an array directly
-          allMembers = response.data;
-        } else if (response.data.members && Array.isArray(response.data.members)) {
-          // If response.data has a members property
-          allMembers = response.data.members;
+        if (Array.isArray(membersResponse.data)) {
+          allMembers = membersResponse.data;
+        } else if (membersResponse.data.members && Array.isArray(membersResponse.data.members)) {
+          allMembers = membersResponse.data.members;
         }
         
-        console.log('Setting members array:', allMembers);
-        console.log('Members count:', allMembers.length);
+        // Fetch practice guests
+        const guestsResponse = await axios.get(`/api/practices/${formData.practiceId}/guests`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         
-        if (allMembers.length > 0) {
-          console.log('First member:', allMembers[0]);
-        }
+        const guestIds = guestsResponse.data.guests?.map((g: any) => g.id) || [];
         
+        // Combine members with guests and mark them
+        const combinedPlayers = allMembers.map(member => ({
+          ...member,
+          isGuest: guestIds.includes(member.user.id)
+        }));
+        
+        console.log('Combined players:', combinedPlayers);
         setMembers(allMembers);
       } catch (err) {
         console.error('Error fetching members:', err);
-        if (err instanceof Error) {
-          console.error('Error message:', err.message);
-          console.error('Error stack:', err.stack);
-        }
-        // Try to extract axios error details
         if (axios.isAxiosError(err)) {
           console.error('Axios error status:', err.response?.status);
           console.error('Axios error data:', err.response?.data);
@@ -286,7 +282,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
           <option value="">{members.length === 0 ? 'No players available' : 'Select player'}</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel})
+              {member.user.name} ({member.user.skillLevel}) {(member as any).isGuest ? '👥 Guest' : ''}
             </option>
           ))}
         </select>
@@ -309,7 +305,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
             .filter(m => m.id !== formData.player1Id)
             .map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel})
+              {member.user.name} ({member.user.skillLevel}) {(member as any).isGuest ? '👥 Guest' : ''}
             </option>
           ))}
         </select>
