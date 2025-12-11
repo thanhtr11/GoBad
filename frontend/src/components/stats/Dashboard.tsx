@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { useClub } from '../../context/ClubContext';
 
 interface Club {
   id: string;
@@ -39,20 +40,7 @@ interface Practice {
 }
 
 const Dashboard: React.FC = () => {
-  // Fetch clubs
-  const { data: clubsData } = useQuery({
-    queryKey: ['clubs'],
-    queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
-      const response = await axios.get('/api/clubs', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return response.data?.clubs || [];
-    },
-  });
-
-  const clubs = (clubsData || []) as Club[];
-  const selectedClubId = clubs.length > 0 ? clubs[0].id : undefined;
+  const { selectedClubId } = useClub();
 
   // Fetch club stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
