@@ -65,11 +65,7 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     allowedHosts: ['**'],
-    hmr: {
-      host: 'gobad.thanhtr.com',
-      port: 443,
-      protocol: 'wss'
-    },
+    hmr: false,
     watch: {
       usePolling: true,
       interval: 100
