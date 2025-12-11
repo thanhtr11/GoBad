@@ -378,7 +378,6 @@ model TournamentTemplate {
   // Relations
   club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
   creator     User         @relation(fields: [createdBy], references: [id], onDelete: Restrict)
-  tournaments Tournament[]
 
   @@index([clubId])
   @@map("tournament_templates")
