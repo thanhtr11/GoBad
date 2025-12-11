@@ -28,18 +28,13 @@ app.set('trust proxy', 1); // Trust only 1 proxy (Nginx)
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  max: 5000, // Increased limit
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   skip: (req) => {
-    // Skip rate limiting for health checks and local requests (from docker network)
+    // Skip rate limiting for health checks
     if (req.path === '/health') return true;
-    const ip = req.ip || req.socket.remoteAddress || '';
-    const forwardedFor = req.headers['x-forwarded-for'] as string || '';
-    // Skip rate limiting for internal Docker network IPs (172.x.x.x, 127.x.x.x, ::1, ::ffff:)
-    if (ip.startsWith('127.') || ip.startsWith('172.') || ip.startsWith('::1') || ip.startsWith('::ffff:')) return true;
-    if (forwardedFor.startsWith('127.') || forwardedFor.startsWith('172.')) return true;
     // In development, be very permissive
     if (process.env.NODE_ENV === 'development') return true;
     return false;
@@ -53,31 +48,37 @@ const limiter = rateLimit({
 // Strict rate limiting for login attempts
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Increased for testing
+  max: 5000, // Increased for testing
   message: 'Too many login attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for local/internal requests
-    const ip = req.ip || req.socket.remoteAddress || '';
-    if (ip.startsWith('127.') || ip.startsWith('172.') || ip.startsWith('::ffff:127.') || ip.startsWith('::ffff:172.')) return true;
+    // In development, skip rate limiting
     if (process.env.NODE_ENV === 'development') return true;
     return false;
   },
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For for proxied requests
+    return req.headers['x-forwarded-for'] as string || req.ip || 'unknown';
+  }
 });
 
 // Moderate rate limiting for registration
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 500, // Increased for testing
+  max: 5000, // Increased for testing
   message: 'Too many registration attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for local/internal requests
-    const ip = req.ip || req.socket.remoteAddress || '';
-    if (ip.startsWith('127.') || ip.startsWith('172.') || ip.startsWith('::ffff:127.') || ip.startsWith('::ffff:172.')) return true;
+    // In development, skip rate limiting
     if (process.env.NODE_ENV === 'development') return true;
+    return false;
+  },
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For for proxied requests
+    return req.headers['x-forwarded-for'] as string || req.ip || 'unknown';
+  }
     return false;
   },
 });
