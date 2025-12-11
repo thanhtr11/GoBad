@@ -115,20 +115,24 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
           allMembers = membersResponse.data.members;
         }
         
-        // Fetch practice guests
-        const guestsResponse = await axios.get(`/api/practices/${formData.practiceId}/guests`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Try to fetch practice guests (optional)
+        let guestIds: string[] = [];
+        try {
+          const guestsResponse = await axios.get(`/api/practices/${formData.practiceId}/guests`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          guestIds = guestsResponse.data.guests?.map((g: any) => g.id) || [];
+        } catch (guestErr) {
+          console.log('Guests endpoint not available, skipping guest marking');
+        }
         
-        const guestIds = guestsResponse.data.guests?.map((g: any) => g.id) || [];
-        
-        // Combine members with guests and mark them
-        const combinedPlayers = allMembers.map(member => ({
+        // Mark guests in members array
+        const playersWithGuestStatus = allMembers.map(member => ({
           ...member,
           isGuest: guestIds.includes(member.user.id)
         }));
         
-        console.log('Combined players:', combinedPlayers);
+        console.log('Members with guest status:', playersWithGuestStatus);
         setMembers(allMembers);
       } catch (err) {
         console.error('Error fetching members:', err);
