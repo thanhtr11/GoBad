@@ -14,6 +14,7 @@ import MatchesPage from './pages/MatchesPage';
 import StatsPage from './pages/StatsPage';
 import FinancesPage from './pages/FinancesPage';
 import TournamentsPage from './pages/TournamentsPage';
+import TournamentDetailPage from './pages/TournamentDetailPage';
 import Settings from './pages/Settings';
 
 // Create a client
@@ -117,6 +118,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <TournamentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournaments/:id"
+        element={
+          <ProtectedRoute>
+            <TournamentDetailPage />
           </ProtectedRoute>
         }
       />

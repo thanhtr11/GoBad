@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { useClub } from '../context/ClubContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
@@ -33,6 +34,7 @@ interface Practice {
 const TournamentsPage: React.FC = () => {
   const { user } = useAuth();
   const { selectedClubId } = useClub();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -260,11 +262,15 @@ const TournamentsPage: React.FC = () => {
                   <div
                     key={tournament.id}
                     className="p-6 hover:bg-gray-50 transition cursor-pointer"
-                    onClick={() => setSelectedTournament(tournament)}
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">{tournament.name}</h3>
+                      <div
+                        className="flex-1"
+                        onClick={() => navigate(`/tournaments/${tournament.id}`)}
+                      >
+                        <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600">
+                          🏆 {tournament.name}
+                        </h3>
                         <div className="mt-2 space-y-1 text-sm text-gray-600">
                           <p>Format: {tournament.format === 'KNOCKOUT' ? 'Knockout' : 'Round Robin'}</p>
                           {tournament.practice && (

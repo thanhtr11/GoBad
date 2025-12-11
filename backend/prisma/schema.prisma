@@ -24,11 +24,12 @@ model Club {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  members     Member[]
-  practices   Practice[]
-  finances    Finance[]
-  tournaments Tournament[]
-  managers    ClubManager[]
+  members             Member[]
+  practices           Practice[]
+  finances            Finance[]
+  tournaments         Tournament[]
+  tournamentTemplates TournamentTemplate[]
+  managers            ClubManager[]
 
   @@map("clubs")
 }
@@ -71,6 +72,7 @@ model User {
   // Relations
   clubMemberships Member[]
   managedClubs    ClubManager[]
+  tournamentTemplates TournamentTemplate[]
 
   @@index([role])
   @@index([email])
@@ -113,15 +115,20 @@ model Member {
   updatedAt     DateTime     @updatedAt
 
   // Relations
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  club             Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  checkedInBy      Member?  @relation("GuestCheckedIn", fields: [checkedInById], references: [id])
-  checkedInGuests  Member[] @relation("GuestCheckedIn")
-  matchesAsPlayer1 Match[]      @relation("Player1")
-  matchesAsPlayer2 Match[]      @relation("Player2")
-  matchesAsPlayer3 Match[]      @relation("Player3")
-  matchesAsPlayer4 Match[]      @relation("Player4")
-  attendance       Attendance[]
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club                    Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  checkedInBy             Member?  @relation("GuestCheckedIn", fields: [checkedInById], references: [id])
+  checkedInGuests         Member[] @relation("GuestCheckedIn")
+  matchesAsPlayer1        Match[]      @relation("Player1")
+  matchesAsPlayer2        Match[]      @relation("Player2")
+  matchesAsPlayer3        Match[]      @relation("Player3")
+  matchesAsPlayer4        Match[]      @relation("Player4")
+  attendance              Attendance[]
+  tournamentParticipants  TournamentParticipant[]
+  tournamentMatchesAsPlayer1 TournamentMatch[] @relation("TournamentMatchPlayer1")
+  tournamentMatchesAsPlayer2 TournamentMatch[] @relation("TournamentMatchPlayer2")
+  tournamentMatchesAsWinner TournamentMatch[] @relation("TournamentMatchWinner")
+  tournamentStandings     TournamentStanding[]
 
   @@unique([userId, clubId])
   @@index([clubId])
@@ -273,15 +280,111 @@ model Tournament {
   name       String
   format     TournamentFormat
   status     TournamentStatus @default(UPCOMING)
+  templateId String?
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
   // Relations
-  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  club          Club                       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  practice      Practice                   @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  template      TournamentTemplate?        @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  participants  TournamentParticipant[]
+  matches       TournamentMatch[]
+  standings     TournamentStanding[]
 
   @@index([clubId])
+  @@index([templateId])
   @@map("tournaments")
+}
+
+model TournamentParticipant {
+  id          String   @id @default(uuid())
+  tournamentId String
+  memberId    String
+  seedRank    Int?
+  joinedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  member     Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, memberId])
+  @@index([tournamentId])
+  @@index([memberId])
+  @@map("tournament_participants")
+}
+
+model TournamentMatch {
+  id              String   @id @default(uuid())
+  tournamentId    String
+  round           Int
+  position        Int
+  player1Id       String?
+  player2Id       String?
+  player1Score    Int?
+  player2Score    Int?
+  winnerId        String?
+  scheduledDate   DateTime?
+  scheduledTime   String?
+  court           String?
+  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player1    Member?    @relation("TournamentMatchPlayer1", fields: [player1Id], references: [id], onDelete: SetNull)
+  player2    Member?    @relation("TournamentMatchPlayer2", fields: [player2Id], references: [id], onDelete: SetNull)
+  winner     Member?    @relation("TournamentMatchWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  @@index([tournamentId])
+  @@index([round])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@map("tournament_matches")
+}
+
+model TournamentStanding {
+  id              String   @id @default(uuid())
+  tournamentId    String
+  memberId        String
+  matchesPlayed   Int      @default(0)
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  pointsFor       Int      @default(0)
+  pointsAgainst   Int      @default(0)
+  ranking         Int?
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  member     Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, memberId])
+  @@index([tournamentId])
+  @@index([memberId])
+  @@map("tournament_standings")
+}
+
+model TournamentTemplate {
+  id          String   @id @default(uuid())
+  clubId      String
+  name        String
+  format      String
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  creator     User         @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  tournaments Tournament[]
+
+  @@index([clubId])
+  @@map("tournament_templates")
 }
 
 enum TournamentFormat {

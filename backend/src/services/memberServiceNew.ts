@@ -155,7 +155,6 @@ export async function createGuestMember(data: {
       clubId: practice.clubId,
       type: 'GUEST',
       status: 'ACTIVE',
-      membershipTier: 'ADULT',
     },
     include: {
       user: {
