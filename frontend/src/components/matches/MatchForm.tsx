@@ -133,7 +133,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
         }));
         
         console.log('Members with guest status:', playersWithGuestStatus);
-        setMembers(allMembers);
+        setMembers(playersWithGuestStatus);
       } catch (err) {
         console.error('Error fetching members:', err);
         if (axios.isAxiosError(err)) {
