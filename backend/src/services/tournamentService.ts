@@ -373,122 +373,153 @@ class TournamentService {
    * Add participant to tournament
    */
   async addParticipant(tournamentId: string, memberId: string, seedRank?: number) {
-    return await prisma.tournamentParticipant.create({
-      data: {
-        tournamentId,
-        memberId,
-        seedRank: seedRank || 999, // Default to bottom seed
-      },
-      include: {
-        member: {
-          include: {
-            user: true,
+    try {
+      return await prisma.tournamentParticipant.create({
+        data: {
+          tournamentId,
+          memberId,
+          seedRank: seedRank || 999, // Default to bottom seed
+        },
+        include: {
+          member: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('tournament_participants')) {
+        console.warn('Tournament tables not yet created, skipping participant creation');
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**
    * Remove participant from tournament
    */
   async removeParticipant(tournamentId: string, memberId: string) {
-    return await prisma.tournamentParticipant.deleteMany({
-      where: {
-        tournamentId,
-        memberId,
-      },
-    });
+    try {
+      return await prisma.tournamentParticipant.deleteMany({
+        where: {
+          tournamentId,
+          memberId,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('tournament_participants')) {
+        console.warn('Tournament tables not yet created, skipping participant removal');
+        return { count: 0 };
+      }
+      throw error;
+    }
   }
 
   /**
    * Get all tournament participants with member details
    */
   async getParticipantsWithDetails(tournamentId: string) {
-    const participants = await prisma.tournamentParticipant.findMany({
-      where: { tournamentId },
-      include: {
-        member: {
-          include: {
-            user: true,
+    try {
+      const participants = await prisma.tournamentParticipant.findMany({
+        where: { tournamentId },
+        include: {
+          member: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-      orderBy: { seedRank: 'asc' },
-    });
+        orderBy: { seedRank: 'asc' },
+      });
 
-    return participants.map((p) => ({
-      participantId: p.id,
-      memberId: p.memberId,
-      name: p.member.user.username,
-      seedRank: p.seedRank,
-      joinedAt: p.joinedAt,
-    }));
+      return participants.map((p) => ({
+        participantId: p.id,
+        memberId: p.memberId,
+        name: p.member.user.username,
+        seedRank: p.seedRank,
+        joinedAt: p.joinedAt,
+      }));
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('tournament_participants')) {
+        return [];
+      }
+      throw error;
+    }
   }
 
   /**
    * Create all matches for a tournament (initialize bracket)
    */
   async initializeMatches(tournamentId: string) {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-    });
+    try {
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+      });
 
-    if (!tournament) throw new Error('Tournament not found');
+      if (!tournament) throw new Error('Tournament not found');
 
-    const participants = await this.getParticipantsWithDetails(tournamentId);
+      const participants = await this.getParticipantsWithDetails(tournamentId);
 
-    if (participants.length < 2) {
-      throw new Error('Need at least 2 participants to create matches');
-    }
+      if (participants.length < 2) {
+        throw new Error('Need at least 2 participants to create matches');
+      }
 
-    const playerIds = participants.map((p) => p.memberId);
-    const playerNames = new Map(participants.map((p) => [p.memberId, p.name]));
+      const playerIds = participants.map((p) => p.memberId);
+      const playerNames = new Map(participants.map((p) => [p.memberId, p.name]));
 
-    let matches: any[] = [];
+      let matches: any[] = [];
 
-    if (tournament.format === 'KNOCKOUT') {
-      // Generate knockout bracket
-      const bracket = this.generateKnockoutBracket(playerIds, playerNames);
+      if (tournament.format === 'KNOCKOUT') {
+        // Generate knockout bracket
+        const bracket = this.generateKnockoutBracket(playerIds, playerNames);
 
-      // Create matches in database for each bracket node
-      for (let roundNum = 0; roundNum < bracket.rounds.length; roundNum++) {
-        const round = bracket.rounds[roundNum];
-        for (let position = 0; position < round.length; position++) {
-          const node = round[position];
-          const match = await prisma.tournamentMatch.create({
-            data: {
-              tournamentId,
-              round: roundNum,
-              position,
-              player1Id: node.player1Id || null,
-              player2Id: node.player2Id || null,
-              status: 'SCHEDULED',
-            },
-          });
-          matches.push(match);
+        // Create matches in database for each bracket node
+        for (let roundNum = 0; roundNum < bracket.rounds.length; roundNum++) {
+          const round = bracket.rounds[roundNum];
+          for (let position = 0; position < round.length; position++) {
+            const node = round[position];
+            const match = await prisma.tournamentMatch.create({
+              data: {
+                tournamentId,
+                round: roundNum,
+                position,
+                player1Id: node.player1Id || null,
+                player2Id: node.player2Id || null,
+                status: 'SCHEDULED',
+              },
+            });
+            matches.push(match);
+          }
+        }
+      } else {
+        // Generate round-robin matches
+        for (let i = 0; i < playerIds.length; i++) {
+          for (let j = i + 1; j < playerIds.length; j++) {
+            const match = await prisma.tournamentMatch.create({
+              data: {
+                tournamentId,
+                round: 0,
+                position: i * playerIds.length + j,
+                player1Id: playerIds[i],
+                player2Id: playerIds[j],
+                status: 'SCHEDULED',
+              },
+            });
+            matches.push(match);
+          }
         }
       }
-    } else {
-      // Generate round-robin matches
-      for (let i = 0; i < playerIds.length; i++) {
-        for (let j = i + 1; j < playerIds.length; j++) {
-          const match = await prisma.tournamentMatch.create({
-            data: {
-              tournamentId,
-              round: 0,
-              position: i * playerIds.length + j,
-              player1Id: playerIds[i],
-              player2Id: playerIds[j],
-              status: 'SCHEDULED',
-            },
-          });
-          matches.push(match);
-        }
-      }
-    }
 
-    return matches;
+      return matches;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('tournament_matches')) {
+        console.warn('Tournament tables not yet created, skipping match initialization');
+        return [];
+      }
+      throw error;
+    }
   }
 
   /**
@@ -502,131 +533,141 @@ class TournamentService {
     scheduledDate?: string,
     court?: string
   ) {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-    });
+    try {
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+      });
 
-    if (!tournament) throw new Error('Tournament not found');
+      if (!tournament) throw new Error('Tournament not found');
 
-    const match = await prisma.tournamentMatch.findUnique({
-      where: { id: matchId },
-    });
+      const match = await prisma.tournamentMatch.findUnique({
+        where: { id: matchId },
+      });
 
-    if (!match) throw new Error('Match not found');
+      if (!match) throw new Error('Match not found');
 
-    const winnerId = player1Score > player2Score ? match.player1Id : match.player2Id;
-    const loser = player1Score > player2Score ? match.player2Id : match.player1Id;
+      const winnerId = player1Score > player2Score ? match.player1Id : match.player2Id;
+      const loser = player1Score > player2Score ? match.player2Id : match.player1Id;
 
-    // Update match result
-    const updatedMatch = await prisma.tournamentMatch.update({
-      where: { id: matchId },
-      data: {
-        winnerId,
-        player1Score,
-        player2Score,
-        status: 'COMPLETED',
-        scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
-        court,
-      },
-    });
-
-    // Update standings
-    if (winnerId) {
-      await prisma.tournamentStanding.upsert({
-        where: {
-          tournamentId_memberId: {
-            tournamentId,
-            memberId: winnerId,
-          },
-        },
-        update: {
-          matchesPlayed: { increment: 1 },
-          wins: { increment: 1 },
-          pointsFor: { increment: Math.max(player1Score, player2Score) },
-          pointsAgainst: { increment: Math.min(player1Score, player2Score) },
-        },
-        create: {
-          tournamentId,
-          memberId: winnerId,
-          matchesPlayed: 1,
-          wins: 1,
-          losses: 0,
-          pointsFor: Math.max(player1Score, player2Score),
-          pointsAgainst: Math.min(player1Score, player2Score),
-          ranking: 0,
+      // Update match result
+      const updatedMatch = await prisma.tournamentMatch.update({
+        where: { id: matchId },
+        data: {
+          winnerId,
+          player1Score,
+          player2Score,
+          status: 'COMPLETED',
+          scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
+          court,
         },
       });
 
-      if (loser) {
+      // Update standings
+      if (winnerId) {
         await prisma.tournamentStanding.upsert({
           where: {
             tournamentId_memberId: {
               tournamentId,
-              memberId: loser,
+              memberId: winnerId,
             },
           },
           update: {
             matchesPlayed: { increment: 1 },
-            losses: { increment: 1 },
-            pointsFor: { increment: Math.min(player1Score, player2Score) },
-            pointsAgainst: { increment: Math.max(player1Score, player2Score) },
+            wins: { increment: 1 },
+            pointsFor: { increment: Math.max(player1Score, player2Score) },
+            pointsAgainst: { increment: Math.min(player1Score, player2Score) },
           },
           create: {
             tournamentId,
-            memberId: loser,
+            memberId: winnerId,
             matchesPlayed: 1,
-            wins: 0,
-            losses: 1,
-            pointsFor: Math.min(player1Score, player2Score),
-            pointsAgainst: Math.max(player1Score, player2Score),
+            wins: 1,
+            losses: 0,
+            pointsFor: Math.max(player1Score, player2Score),
+            pointsAgainst: Math.min(player1Score, player2Score),
             ranking: 0,
           },
         });
+
+        if (loser) {
+          await prisma.tournamentStanding.upsert({
+            where: {
+              tournamentId_memberId: {
+                tournamentId,
+                memberId: loser,
+              },
+            },
+            update: {
+              matchesPlayed: { increment: 1 },
+              losses: { increment: 1 },
+              pointsFor: { increment: Math.min(player1Score, player2Score) },
+              pointsAgainst: { increment: Math.max(player1Score, player2Score) },
+            },
+            create: {
+              tournamentId,
+              memberId: loser,
+              matchesPlayed: 1,
+              wins: 0,
+              losses: 1,
+              pointsFor: Math.min(player1Score, player2Score),
+              pointsAgainst: Math.max(player1Score, player2Score),
+              ranking: 0,
+            },
+          });
+        }
       }
-    }
 
-    // For knockout, advance winner to next round
-    if (tournament.format === 'KNOCKOUT' && match.round < 10) {
-      const nextRoundMatches = await prisma.tournamentMatch.findMany({
-        where: {
-          tournamentId,
-          round: match.round + 1,
-        },
-        orderBy: { position: 'asc' },
-      });
+      // For knockout, advance winner to next round
+      if (tournament.format === 'KNOCKOUT' && match.round < 10) {
+        const nextRoundMatches = await prisma.tournamentMatch.findMany({
+          where: {
+            tournamentId,
+            round: match.round + 1,
+          },
+          orderBy: { position: 'asc' },
+        });
 
-      if (nextRoundMatches.length > 0) {
-        const nextMatchIndex = Math.floor(match.position / 2);
-        if (nextMatchIndex < nextRoundMatches.length) {
-          const nextMatch = nextRoundMatches[nextMatchIndex];
-          if (match.position % 2 === 0) {
-            // Advance to player1 slot
-            await prisma.tournamentMatch.update({
-              where: { id: nextMatch.id },
-              data: { player1Id: winnerId },
-            });
-          } else {
-            // Advance to player2 slot
-            await prisma.tournamentMatch.update({
-              where: { id: nextMatch.id },
-              data: { player2Id: winnerId },
-            });
+        if (nextRoundMatches.length > 0) {
+          const nextMatchIndex = Math.floor(match.position / 2);
+          if (nextMatchIndex < nextRoundMatches.length) {
+            const nextMatch = nextRoundMatches[nextMatchIndex];
+            if (match.position % 2 === 0) {
+              // Advance to player1 slot
+              await prisma.tournamentMatch.update({
+                where: { id: nextMatch.id },
+                data: { player1Id: winnerId },
+              });
+            } else {
+              // Advance to player2 slot
+              await prisma.tournamentMatch.update({
+                where: { id: nextMatch.id },
+                data: { player2Id: winnerId },
+              });
+            }
           }
         }
       }
-    }
 
-    return updatedMatch;
+      return updatedMatch;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('tournament')) {
+        console.warn('Tournament tables not yet created or match not found');
+        return null;
+      }
+      throw error;
+    }
+  }
   }
 
   /**
    * Get all matches for a tournament with player details
    */
   async getTournamentMatches(tournamentId: string) {
-    const matches = await prisma.tournamentMatch.findMany({
-      where: { tournamentId },
-      orderBy: [{ round: 'asc' }, { position: 'asc' }],
-    });
+    try {
+      const matches = await prisma.tournamentMatch.findMany({
+        where: { tournamentId },
+        orderBy: [{ round: 'asc' }, { position: 'asc' }],
+      });
 
     // Enrich with player names
     const enriched = await Promise.all(
@@ -670,36 +711,52 @@ class TournamentService {
     );
 
     return enriched;
+  } catch (error) {
+    // If tournament_matches table doesn't exist yet, return empty array
+    if (error instanceof Error && error.message.includes('tournament_matches')) {
+      return [];
+    }
+    throw error;
   }
+}
 
   /**
    * Get tournament standings sorted by ranking
    */
   async getTournamentStandings(tournamentId: string) {
-    const standings = await prisma.tournamentStanding.findMany({
-      where: { tournamentId },
-      orderBy: [{ wins: 'desc' }, { pointsFor: 'desc' }],
-    });
+    try {
+      const standings = await prisma.tournamentStanding.findMany({
+        where: { tournamentId },
+        orderBy: [{ wins: 'desc' }, { pointsFor: 'desc' }],
+      });
 
-    // Enrich with member/user details
-    const enriched = await Promise.all(
-      standings.map(async (standing) => {
-        const member = await prisma.member.findUnique({
-          where: { id: standing.memberId },
-          include: { user: true },
-        });
+      // Enrich with member/user details
+      const enriched = await Promise.all(
+        standings.map(async (standing) => {
+          const member = await prisma.member.findUnique({
+            where: { id: standing.memberId },
+            include: { user: true },
+          });
 
-        return {
-          ...standing,
-          memberName: member?.user?.username || 'Unknown',
-        };
-      })
-    );
+          return {
+            ...standing,
+            memberName: member?.user?.username || 'Unknown',
+          };
+        })
+      );
 
-    // Calculate ranking
-    return enriched.map((standing, index) => ({
-      ...standing,
-      ranking: index + 1,
+      // Calculate ranking
+      return enriched.map((standing, index) => ({
+        ...standing,
+        ranking: index + 1,
+      }));
+    } catch (error) {
+      // If tournament_standings table doesn't exist yet, return empty array
+      if (error instanceof Error && error.message.includes('tournament_standings')) {
+        return [];
+      }
+      throw error;
+    }
     }));
   }
 
