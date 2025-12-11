@@ -297,13 +297,11 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
           <option value="">{members.length === 0 ? 'No players available' : 'Select player'}</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel}) {member.isGuest ? '👥 Guest' : ''}
+              {member.user.name} ({member.user.skillLevel}){member.isGuest ? ' [GUEST]' : ''}
             </option>
           ))}
         </select>
-      </div>
-
-      {/* Player 2 */}
+      </div>      {/* Player 2 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Player 2 (Team B) * <span className="text-xs text-gray-500">({members.filter(m => m.id !== formData.player1Id).length} available)</span>
@@ -320,7 +318,7 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
             .filter(m => m.id !== formData.player1Id)
             .map((member) => (
             <option key={member.id} value={member.id}>
-              {member.user.name} ({member.user.skillLevel}) {member.isGuest ? '👥 Guest' : ''}
+              {member.user.name} ({member.user.skillLevel}){member.isGuest ? ' [GUEST]' : ''}
             </option>
           ))}
         </select>
