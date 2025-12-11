@@ -68,7 +68,7 @@ export default defineConfig({
     hmr: {
       host: 'gobad.thanhtr.com',
       port: 443,
-      protocol: 'https'
+      protocol: 'wss'
     },
     watch: {
       usePolling: true,
