@@ -79,8 +79,6 @@ const registerLimiter = rateLimit({
     // Use X-Forwarded-For for proxied requests
     return req.headers['x-forwarded-for'] as string || req.ip || 'unknown';
   }
-    return false;
-  },
 });
 
 // Middleware
