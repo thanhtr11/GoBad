@@ -118,28 +118,48 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
         
         // Try to fetch practice guests (optional)
         let guestIds: string[] = [];
+        let guestsData: any[] = [];
         try {
           const guestsResponse = await axios.get(`/api/practices/${formData.practiceId}/guests`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           console.log('Guests response:', guestsResponse.data);
-          guestIds = guestsResponse.data.guests?.map((g: any) => g.id) || [];
+          guestsData = guestsResponse.data.guests || [];
+          guestIds = guestsData.map((g: any) => g.id) || [];
           console.log('Guest IDs extracted:', guestIds);
         } catch (guestErr) {
           console.log('Guests endpoint error:', guestErr);
         }
         
-        // Only show regular members and guests who checked in for this practice
-        // Filter out guests who didn't check in
+        // Add guests who checked in but aren't in the members list
+        let membersWithGuests = [...allMembers];
+        guestsData.forEach(guest => {
+          const alreadyExists = allMembers.some(m => m.user.id === guest.id);
+          if (!alreadyExists) {
+            console.log(`Adding guest ${guest.name} to members list`);
+            membersWithGuests.push({
+              id: guest.id, // Use guest id as member id for now
+              user: {
+                id: guest.id,
+                name: guest.name,
+                skillLevel: guest.skillLevel,
+                email: guest.email,
+              },
+              type: 'GUEST', // Mark as guest
+            });
+          }
+        });
+        
+        // Mark guests in members array
         console.log('=== GUEST FILTERING DEBUG ===');
-        console.log('All members from endpoint:', allMembers.map(m => ({ 
+        console.log('All members including guests:', membersWithGuests.map(m => ({ 
           name: m.user.name, 
           userId: m.user.id,
           memberType: (m as any).type
         })));
         console.log('Guest IDs who checked in:', guestIds);
         
-        const playersWithGuestStatus = allMembers
+        const playersWithGuestStatus = membersWithGuests
           .filter(member => {
             // Include all regular members
             const isClubGuest = (member as any).type === 'GUEST';
