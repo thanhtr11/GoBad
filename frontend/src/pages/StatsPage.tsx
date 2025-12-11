@@ -29,7 +29,7 @@ interface Member {
 }
 
 const StatsPage: React.FC = () => {
-  const { selectedClubId, clubs } = useClub();
+  const { selectedClubId, clubs, setSelectedClubId } = useClub();
   const [activeTab, setActiveTab] = useState<'overview' | 'leaderboard' | 'player' | 'comparison' | 'trends'>('overview');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>();
   const [comparisonPlayer1, setComparisonPlayer1] = useState<string>();
@@ -62,7 +62,10 @@ const StatsPage: React.FC = () => {
   const players = (playersData || []) as Player[];
 
   const handleFilterChange = (newFilters: StatsFilterOptions) => {
-    // Club selection is now managed by ClubContext, so we don't need to handle it here
+    // Update club selection in context if changed
+    if (newFilters.clubId && newFilters.clubId !== selectedClubId) {
+      setSelectedClubId(newFilters.clubId);
+    }
   };
 
   return (
@@ -78,6 +81,7 @@ const StatsPage: React.FC = () => {
         <StatsFilters
           onFilter={handleFilterChange}
           clubs={clubs}
+          selectedClubId={selectedClubId}
           showSkillFilter={true}
           showMinMatchesFilter={true}
           showSortOptions={true}

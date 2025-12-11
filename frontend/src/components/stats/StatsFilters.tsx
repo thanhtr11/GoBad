@@ -12,6 +12,7 @@ export interface StatsFilterOptions {
 interface StatsFiltersProps {
   onFilter: (filters: StatsFilterOptions) => void;
   clubs?: Array<{ id: string; name: string }>;
+  selectedClubId?: string | null;
   showSkillFilter?: boolean;
   showMinMatchesFilter?: boolean;
   showSortOptions?: boolean;
@@ -20,6 +21,7 @@ interface StatsFiltersProps {
 const StatsFilters: React.FC<StatsFiltersProps> = ({
   onFilter,
   clubs = [],
+  selectedClubId,
   showSkillFilter = false,
   showMinMatchesFilter = true,
   showSortOptions = true,
@@ -27,7 +29,7 @@ const StatsFilters: React.FC<StatsFiltersProps> = ({
   const [filters, setFilters] = useState<StatsFilterOptions>({
     startDate: undefined,
     endDate: undefined,
-    clubId: clubs.length > 0 ? clubs[0].id : undefined,
+    clubId: selectedClubId || (clubs.length > 0 ? clubs[0].id : undefined),
     minMatches: 0,
     sortBy: 'wins',
     skillLevel: 'ALL',
