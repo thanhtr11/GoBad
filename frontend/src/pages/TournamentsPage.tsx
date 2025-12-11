@@ -22,6 +22,7 @@ interface Practice {
   startTime: string;
   endTime: string;
   court: string;
+  isTournament: boolean;
   club: {
     id: string;
     name: string;
@@ -45,13 +46,15 @@ const TournamentsPage: React.FC = () => {
     enabled: !!selectedClubId,
   });
 
-  // Fetch practices for the form
+  // Fetch practices for the form - only tournament practices
   const { data: practices = [] } = useQuery({
     queryKey: ['practices-for-tournament', selectedClubId],
     queryFn: async () => {
       if (!selectedClubId) return [];
       const response = await api.get(`/practices/club/${selectedClubId}`);
-      return response.data.practices || [];
+      const allPractices = response.data.practices || [];
+      // Filter to only show practices marked as tournaments
+      return allPractices.filter((p: Practice) => p.isTournament);
     },
     enabled: !!selectedClubId,
   });
@@ -181,7 +184,7 @@ const TournamentsPage: React.FC = () => {
                       <option value="">Select a practice session</option>
                       {practices.map((practice: Practice) => (
                         <option key={practice.id} value={practice.id}>
-                          {formatDate(practice.date)} {formatTime(practice.startTime)}
+                          {formatDate(practice.date)} {formatTime(practice.startTime)} {practice.isTournament ? '🏆 Tournament' : ''}
                         </option>
                       ))}
                     </select>
