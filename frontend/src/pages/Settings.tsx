@@ -36,9 +36,6 @@ const Settings: React.FC = () => {
   
   // Determine if user is admin (has access to clubs and users tabs)
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'MANAGER';
-  
-  // Debug: log user role
-  console.log('Current user role:', currentUser?.role, 'isAdmin:', isAdmin);
   const [showNewClubForm, setShowNewClubForm] = useState(false);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDesc, setNewClubDesc] = useState('');
@@ -67,34 +64,36 @@ const Settings: React.FC = () => {
   const [selectedManagerUser, setSelectedManagerUser] = useState<string | null>(null);
   const [clubManagers, setClubManagers] = useState<Record<string, any[]>>({});
 
-  // Fetch clubs
+  // Fetch clubs (admin only)
   const { data: clubs = [], refetch: refetchClubs } = useQuery<Club[]>({
     queryKey: ['clubs-settings'],
     queryFn: async () => {
       const response = await api.get('/clubs');
       return response.data.clubs || [];
     },
+    enabled: isAdmin,
   });
 
-  // Fetch all users
+  // Fetch all users (admin only)
   const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery<User[]>({
     queryKey: ['users-list'],
     queryFn: async () => {
       const response = await api.get('/users');
       return response.data.users || [];
     },
+    enabled: isAdmin,
   });
 
-  // Auto-fetch managers for all clubs when clubs load
+  // Auto-fetch managers for all clubs when clubs load (admin only)
   useEffect(() => {
-    if (clubs.length > 0) {
+    if (isAdmin && clubs.length > 0) {
       clubs.forEach((club) => {
         if (!clubManagers[club.id]) {
           fetchClubManagers(club.id);
         }
       });
     }
-  }, [clubs]);
+  }, [clubs, isAdmin]);
 
   // Create club mutation
   const createClubMutation = useMutation({
