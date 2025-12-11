@@ -127,8 +127,14 @@ export class MemberService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Add type to each member object for frontend filtering
+    const membersWithType = members.map(m => ({
+      ...m,
+      type: m.type, // MemberType enum: MEMBER or GUEST
+    }));
+
     // Filter by skillLevel and searchTerm in JavaScript
-    let filtered = members;
+    let filtered = membersWithType;
     
     if (skillLevel) {
       filtered = filtered.filter(m => m.user.skillLevel === skillLevel);
