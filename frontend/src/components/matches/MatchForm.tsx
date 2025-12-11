@@ -131,22 +131,35 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
         
         // Only show regular members and guests who checked in for this practice
         // Filter out guests who didn't check in
+        console.log('=== GUEST FILTERING DEBUG ===');
+        console.log('All members from endpoint:', allMembers.map(m => ({ 
+          name: m.user.name, 
+          userId: m.user.id,
+          memberType: (m as any).type
+        })));
+        console.log('Guest IDs who checked in:', guestIds);
+        
         const playersWithGuestStatus = allMembers
           .filter(member => {
             // Include all regular members
             const isClubGuest = (member as any).type === 'GUEST';
+            const isInGuestList = guestIds.includes(member.user.id);
+            
+            console.log(`${member.user.name}: type=${isClubGuest ? 'GUEST' : 'MEMBER'}, checkedIn=${isInGuestList}`);
+            
             if (!isClubGuest) return true;
             // Only include guests if they checked in for this practice
-            return guestIds.includes(member.user.id);
+            return isInGuestList;
           })
           .map(member => ({
             ...member,
             isGuest: guestIds.includes(member.user.id)
           }));
         
-        console.log('Guest IDs to match:', guestIds);
-        console.log('Members to check:', allMembers.map(m => ({ name: m.user.name, id: m.user.id, type: (m as any).type })));
-        console.log('Members with guest status:', playersWithGuestStatus);
+        console.log('Final players list:', playersWithGuestStatus.map(m => ({ 
+          name: m.user.name, 
+          isGuest: m.isGuest 
+        })));
         setMembers(playersWithGuestStatus);
       } catch (err) {
         console.error('Error fetching members:', err);
