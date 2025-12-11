@@ -235,32 +235,36 @@ class TournamentService {
    * Get tournament participants
    */
   async getTournamentParticipants(tournamentId: string) {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      include: {
-        practice: {
-          include: {
-            club: {
-              include: {
-                members: {
-                  include: {
-                    user: true,
-                  },
+    try {
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        include: {
+          club: {
+            include: {
+              members: {
+                include: {
+                  user: true,
                 },
               },
             },
           },
+          practice: {
+            select: { id: true },
+          },
         },
-      },
-    });
+      });
 
-    if (!tournament) return null;
+      if (!tournament || !tournament.club) return null;
 
-    // Get all members from the practice's club with user data for names
-    return tournament.practice.club.members.map((member: any) => ({
-      ...member,
-      name: member.user.username,
-    }));
+      // Get all members from the tournament's club with user data for names
+      return tournament.club.members.map((member: any) => ({
+        ...member,
+        name: member.user.username,
+      }));
+    } catch (error) {
+      console.error('Error in getTournamentParticipants:', error);
+      return null;
+    }
   }
 
   /**
@@ -289,13 +293,33 @@ class TournamentService {
    * Get tournament by ID
    */
   async getTournament(tournamentId: string) {
-    return await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      include: {
-        club: true,
-        practice: true,
-      },
-    });
+    try {
+      return await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        include: {
+          club: true,
+          practice: {
+            select: {
+              id: true,
+              date: true,
+              startTime: true,
+              endTime: true,
+              court: true,
+              isTournament: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error in getTournament:', error);
+      // Fallback: return tournament without practice data
+      return await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        include: {
+          club: true,
+        },
+      });
+    }
   }
 
   /**
@@ -315,13 +339,34 @@ class TournamentService {
    * List tournaments for a club
    */
   async getClubTournaments(clubId: string) {
-    return await prisma.tournament.findMany({
-      where: { clubId },
-      include: {
-        practice: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      const tournaments = await prisma.tournament.findMany({
+        where: { clubId },
+        include: {
+          practice: {
+            select: {
+              id: true,
+              date: true,
+              startTime: true,
+              endTime: true,
+              court: true,
+              isTournament: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      
+      // Filter out tournaments with missing practices to avoid errors
+      return tournaments.filter(t => t.practice !== null);
+    } catch (error) {
+      console.error('Error in getClubTournaments:', error);
+      // Fallback: return tournaments without practice data
+      return await prisma.tournament.findMany({
+        where: { clubId },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
   }
 
   /**
