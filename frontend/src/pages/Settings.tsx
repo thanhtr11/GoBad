@@ -918,19 +918,21 @@ const Settings: React.FC = () => {
               </div>
             </div>
 
-            {/* Account Status */}
+            {/* Reset Password Section */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Status</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-gray-900">Status</span>
-                  <span className="text-green-600 font-medium">✓ Active</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <span className="text-gray-900">Member Since</span>
-                  <span className="text-blue-600 font-medium">{new Date(currentUser?.createdAt || '').toLocaleDateString()}</span>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security</h3>
+              <button
+                onClick={() => {
+                  setPasswordResetUsername(currentUser?.username || '');
+                  setPasswordResetUserId(currentUser?.id || null);
+                  setShowPasswordResetModal(true);
+                  setResetPassword('');
+                  setPasswordError('');
+                }}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+              >
+                Change Password
+              </button>
             </div>
           </div>
         )}
