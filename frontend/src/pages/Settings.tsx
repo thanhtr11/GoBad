@@ -84,6 +84,17 @@ const Settings: React.FC = () => {
     enabled: isAdmin,
   });
 
+  // Fetch current user's profile data
+  const { data: userProfile = currentUser } = useQuery<User>({
+    queryKey: ['current-user-profile', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return currentUser;
+      const response = await api.get(`/users/${currentUser.id}`);
+      return response.data.user || currentUser;
+    },
+    enabled: !!currentUser?.id,
+  });
+
   // Auto-fetch managers for all clubs when clubs load (admin only)
   useEffect(() => {
     if (isAdmin && clubs.length > 0) {
@@ -890,28 +901,28 @@ const Settings: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Username</p>
-                    <p className="text-gray-900 font-medium">@{currentUser?.username}</p>
+                    <p className="text-gray-900 font-medium">@{userProfile?.username}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Full Name</p>
-                    <p className="text-gray-900 font-medium">{currentUser?.name || 'Not Set'}</p>
+                    <p className="text-gray-900 font-medium">{userProfile?.name || 'Not Set'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="text-gray-900 font-medium">{currentUser?.email}</p>
+                    <p className="text-gray-900 font-medium">{userProfile?.email}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
-                    <p className="text-gray-900 font-medium">{currentUser?.phone || 'Not Set'}</p>
+                    <p className="text-gray-900 font-medium">{userProfile?.phone || 'Not Set'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Skill Level</p>
-                    <p className="text-gray-900 font-medium">{currentUser?.skillLevel || 'Not Set'}</p>
+                    <p className="text-gray-900 font-medium">{userProfile?.skillLevel || 'Not Set'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Role</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(currentUser?.role || '')}`}>
-                      {currentUser?.role}
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(userProfile?.role || '')}`}>
+                      {userProfile?.role}
                     </span>
                   </div>
                 </div>
