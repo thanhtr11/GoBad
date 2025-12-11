@@ -669,56 +669,56 @@ class TournamentService {
         orderBy: [{ round: 'asc' }, { position: 'asc' }],
       });
 
-    // Enrich with player names
-    const enriched = await Promise.all(
-      matches.map(async (match) => {
-        let player1Name = null;
-        let player2Name = null;
-        let winnerName = null;
+      // Enrich with player names
+      const enriched = await Promise.all(
+        matches.map(async (match) => {
+          let player1Name = null;
+          let player2Name = null;
+          let winnerName = null;
 
-        if (match.player1Id) {
-          const member = await prisma.member.findUnique({
-            where: { id: match.player1Id },
-            include: { user: true },
-          });
-          player1Name = member?.user?.username || null;
-        }
+          if (match.player1Id) {
+            const member = await prisma.member.findUnique({
+              where: { id: match.player1Id },
+              include: { user: true },
+            });
+            player1Name = member?.user?.username || null;
+          }
 
-        if (match.player2Id) {
-          const member = await prisma.member.findUnique({
-            where: { id: match.player2Id },
-            include: { user: true },
-          });
-          player2Name = member?.user?.username || null;
-        }
+          if (match.player2Id) {
+            const member = await prisma.member.findUnique({
+              where: { id: match.player2Id },
+              include: { user: true },
+            });
+            player2Name = member?.user?.username || null;
+          }
 
-        if (match.winnerId) {
-          const member = await prisma.member.findUnique({
-            where: { id: match.winnerId },
-            include: { user: true },
-          });
-          winnerName = member?.user?.username || null;
-        }
+          if (match.winnerId) {
+            const member = await prisma.member.findUnique({
+              where: { id: match.winnerId },
+              include: { user: true },
+            });
+            winnerName = member?.user?.username || null;
+          }
 
-        return {
-          ...match,
-          player1Name,
-          player2Name,
-          winnerName,
-          scores: match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : null,
-        };
-      })
-    );
+          return {
+            ...match,
+            player1Name,
+            player2Name,
+            winnerName,
+            scores: match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : null,
+          };
+        })
+      );
 
-    return enriched;
-  } catch (error) {
-    // If tournament_matches table doesn't exist yet, return empty array
-    if (error instanceof Error && error.message.includes('tournament_matches')) {
-      return [];
+      return enriched;
+    } catch (error) {
+      // If tournament_matches table doesn't exist yet, return empty array
+      if (error instanceof Error && error.message.includes('tournament_matches')) {
+        return [];
+      }
+      throw error;
     }
-    throw error;
   }
-}
 
   /**
    * Get tournament standings sorted by ranking
@@ -757,7 +757,6 @@ class TournamentService {
       }
       throw error;
     }
-    }));
   }
 
   /**
