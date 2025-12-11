@@ -36,6 +36,9 @@ const Settings: React.FC = () => {
   
   // Determine if user is admin (has access to clubs and users tabs)
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'MANAGER';
+  
+  // Debug: log user role
+  console.log('Current user role:', currentUser?.role, 'isAdmin:', isAdmin);
   const [showNewClubForm, setShowNewClubForm] = useState(false);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDesc, setNewClubDesc] = useState('');
