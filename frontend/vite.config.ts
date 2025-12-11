@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.ico'],
       manifest: {
         name: 'GoBad - Badminton Club Manager',
         short_name: 'GoBad',
@@ -19,44 +19,8 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['sports', 'productivity'],
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-maskable-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ],
-        screenshots: [
-          {
-            src: 'screenshot1.png',
-            sizes: '540x720',
-            form_factor: 'narrow'
-          },
-          {
-            src: 'screenshot2.png',
-            sizes: '1280x720',
-            form_factor: 'wide'
-          }
-        ]
+        icons: [],
+        screenshots: []
       }
     })
   ],
