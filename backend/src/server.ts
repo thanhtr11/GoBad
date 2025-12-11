@@ -12,8 +12,8 @@ import memberRoutes from './routes/membersNew';
 import practiceRoutes from './routes/practices';
 import matchRoutes from './routes/matches';
 import statsRoutes from './routes/stats';
+import financeRoutes from './routes/finances';
 // import tournamentRoutes from './routes/tournaments';
-// import financeRoutes from './routes/finances';
 import attendanceRoutes from './routes/attendance';
 
 // Load environment variables
@@ -150,10 +150,10 @@ app.use('/api/stats', statsRoutes);
 // TEMPORARILY DISABLED - needs refactoring for new schema
 // // Tournament routes
 // app.use('/api/tournaments', tournamentRoutes);
-// 
-// // Finance routes
-// app.use('/api/finances', financeRoutes);
-// 
+
+// Finance routes
+app.use('/api/finances', financeRoutes);
+
 // Attendance routes
 app.use('/api/attendance', attendanceRoutes);
 // 
