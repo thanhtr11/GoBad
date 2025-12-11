@@ -121,17 +121,27 @@ const MatchForm: React.FC<MatchFormProps> = ({ practiceId, onSuccess, onCancel }
           const guestsResponse = await axios.get(`/api/practices/${formData.practiceId}/guests`, {
             headers: { Authorization: `Bearer ${token}` },
           });
+          console.log('Guests response:', guestsResponse.data);
           guestIds = guestsResponse.data.guests?.map((g: any) => g.id) || [];
+          console.log('Guest IDs extracted:', guestIds);
         } catch (guestErr) {
-          console.log('Guests endpoint not available, skipping guest marking');
+          console.log('Guests endpoint error:', guestErr);
         }
         
         // Mark guests in members array
-        const playersWithGuestStatus = allMembers.map(member => ({
-          ...member,
-          isGuest: guestIds.includes(member.user.id)
-        }));
+        const playersWithGuestStatus = allMembers.map(member => {
+          const isGuest = guestIds.includes(member.user.id);
+          if (isGuest) {
+            console.log(`Marked ${member.user.name} as guest`);
+          }
+          return {
+            ...member,
+            isGuest
+          };
+        });
         
+        console.log('Guest IDs to match:', guestIds);
+        console.log('Members to check:', allMembers.map(m => ({ name: m.user.name, id: m.user.id })));
         console.log('Members with guest status:', playersWithGuestStatus);
         setMembers(playersWithGuestStatus);
       } catch (err) {
