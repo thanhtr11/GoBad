@@ -1,2 +1,1 @@
--- AlterTable
-ALTER TABLE "members" ADD COLUMN     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+-- This migration was skipped (table was already created)
