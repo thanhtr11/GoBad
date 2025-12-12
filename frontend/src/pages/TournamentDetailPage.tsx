@@ -251,6 +251,13 @@ const TournamentDetailPage: React.FC = () => {
     (m) => !participants.some((p) => p.memberId === m.id)
   );
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('DEBUG: participants state =', participants);
+    console.log('DEBUG: activeTab =', activeTab);
+    console.log('DEBUG: isAdmin =', isAdmin);
+  }, [participants, activeTab, isAdmin]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
@@ -373,8 +380,11 @@ const TournamentDetailPage: React.FC = () => {
               <div className="text-center py-8">Loading participants...</div>
             ) : participantsError ? (
               <div className="text-center py-8 text-red-600">Error loading participants: {participantsError.message}</div>
-            ) : participants.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">No participants yet</div>
+            ) : !participants || participants.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-xl text-gray-600 font-semibold">No participants yet</div>
+                <div className="text-gray-500 mt-2">Add members to start the tournament</div>
+              </div>
             ) : (
               <div className="space-y-2">
                 {participants.map((participant) => (
