@@ -657,7 +657,6 @@ class TournamentService {
       throw error;
     }
   }
-  }
 
   /**
    * Get all matches for a tournament with player details
