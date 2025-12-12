@@ -556,7 +556,6 @@ class TournamentService {
       if (!match) throw new Error('Match not found');
 
       const winnerId = player1Score > player2Score ? match.player1Id : match.player2Id;
-      const loser = player1Score > player2Score ? match.player2Id : match.player1Id;
 
       // Update match result
       const updatedMatch = await prisma.tournamentMatch.update({
