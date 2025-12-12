@@ -33,6 +33,12 @@ export const api = {
     }
     return apiInstance.put(url, data);
   },
+  patch: async (url: string, data: any) => {
+    if (!apiInstance) {
+      throw new Error('API not initialized');
+    }
+    return apiInstance.patch(url, data);
+  },
   delete: async (url: string) => {
     if (!apiInstance) {
       throw new Error('API not initialized');
