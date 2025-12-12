@@ -162,6 +162,10 @@ const TournamentDetailPage: React.FC = () => {
       setSelectedMemberId('');
       setShowAddParticipant(false);
     },
+    onError: (error: any) => {
+      console.error('Error adding participant:', error);
+      alert(`Failed to add participant: ${error.response?.data?.message || error.message}`);
+    },
   });
 
   // Mutation: Remove participant
@@ -320,7 +324,9 @@ const TournamentDetailPage: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {allMembers.length === 0 ? (
-                      <div className="text-gray-600 py-2">Loading members...</div>
+                      <div className="text-gray-600 py-2">Loading members... (Loaded: {allMembers.length})</div>
+                    ) : availableMembers.length === 0 ? (
+                      <div className="text-gray-600 py-2">All members are already participants</div>
                     ) : (
                       <>
                         <select
@@ -341,7 +347,7 @@ const TournamentDetailPage: React.FC = () => {
                             disabled={!selectedMemberId || addParticipantMutation.isPending}
                             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
                           >
-                            Add
+                            {addParticipantMutation.isPending ? 'Adding...' : 'Add'}
                           </button>
                           <button
                             onClick={() => setShowAddParticipant(false)}
