@@ -161,15 +161,19 @@ const TournamentDetailPage: React.FC = () => {
   // Mutation: Add participant
   const addParticipantMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      await api.post(`/tournaments/${id}/participants`, { memberId });
+      console.log('Adding participant - Tournament ID:', id, 'Member ID:', memberId);
+      const response = await api.post(`/tournaments/${id}/participants`, { memberId });
+      console.log('Add participant response:', response.data);
+      return response.data;
     },
     onSuccess: () => {
+      console.log('Successfully added participant');
       queryClient.invalidateQueries({ queryKey: ['tournament-participants', id] });
       setSelectedMemberId('');
       setShowAddParticipant(false);
     },
     onError: (error: any) => {
-      console.error('Error adding participant:', error);
+      console.error('Error adding participant:', error.response?.data || error.message);
       alert(`Failed to add participant: ${error.response?.data?.message || error.message}`);
     },
   });
@@ -355,7 +359,10 @@ const TournamentDetailPage: React.FC = () => {
                         </select>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => selectedMemberId && addParticipantMutation.mutate(selectedMemberId)}
+                            onClick={() => {
+                              console.log('Add button clicked - selectedMemberId:', selectedMemberId);
+                              selectedMemberId && addParticipantMutation.mutate(selectedMemberId);
+                            }}
                             disabled={!selectedMemberId || addParticipantMutation.isPending}
                             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
                           >
