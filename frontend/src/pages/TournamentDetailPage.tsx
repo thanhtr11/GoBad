@@ -140,10 +140,13 @@ const TournamentDetailPage: React.FC = () => {
       const response = await api.get(`/clubs/${tournament.clubId}/members`);
       const members = response.data.members || [];
       
-      // Ensure each member has proper name data
+      // Ensure each member has proper display name - prioritize full name over username
       return members.map((m: any) => ({
         ...m,
-        user: m.user || { name: m.name || 'Unknown Member' }
+        user: {
+          ...m.user,
+          displayName: m.user?.name || m.user?.username || 'Unknown'
+        }
       }));
     },
     enabled: !!tournament?.clubId,
@@ -328,7 +331,7 @@ const TournamentDetailPage: React.FC = () => {
                           <option value="">Select a member...</option>
                           {availableMembers.map((member) => (
                             <option key={member.id} value={member.id}>
-                              {member.user?.username || member.name || 'Unknown'}
+                              {member.user?.displayName || 'Unknown'}
                             </option>
                           ))}
                         </select>
