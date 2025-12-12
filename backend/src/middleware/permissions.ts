@@ -62,11 +62,14 @@ export async function checkClubAccess(req: Request, res: Response, next: NextFun
     if (req.user.role === 'MEMBER' || req.user.role === 'GUEST') {
       const member = await prisma.member.findUnique({
         where: {
-          userId: req.user.userId,
+          userId_clubId: {
+            userId: req.user.userId,
+            clubId,
+          },
         },
       });
 
-      if (!member || member.clubId !== clubId) {
+      if (!member) {
         res.status(403).json({
           error: 'Forbidden',
           message: 'You do not have access to this club.',
@@ -163,11 +166,15 @@ export async function checkPracticeAccess(req: Request, res: Response, next: Nex
     // MEMBER and GUEST can see practices in their club
     if (req.user.role === 'MEMBER' || req.user.role === 'GUEST') {
       const member = await prisma.member.findUnique({
-        where: { userId: req.user.userId },
-        select: { clubId: true },
+        where: {
+          userId_clubId: {
+            userId: req.user.userId,
+            clubId: practice.clubId,
+          },
+        },
       });
 
-      if (!member || member.clubId !== practice.clubId) {
+      if (!member) {
         res.status(403).json({
           error: 'Forbidden',
           message: 'You do not have access to this practice.',
@@ -266,11 +273,15 @@ export async function checkMatchAccess(req: Request, res: Response, next: NextFu
     // MEMBER and GUEST can see matches in their club
     if (req.user.role === 'MEMBER' || req.user.role === 'GUEST') {
       const member = await prisma.member.findUnique({
-        where: { userId: req.user.userId },
-        select: { clubId: true },
+        where: {
+          userId_clubId: {
+            userId: req.user.userId,
+            clubId,
+          },
+        },
       });
 
-      if (!member || member.clubId !== clubId) {
+      if (!member) {
         res.status(403).json({
           error: 'Forbidden',
           message: 'You do not have access to this match.',
