@@ -78,13 +78,6 @@ const TournamentDetailPage: React.FC = () => {
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<string | null>(null);
 
-  // Debug logging - must be at component top level to maintain hook order
-  React.useEffect(() => {
-    console.log('DEBUG: participants state =', participants);
-    console.log('DEBUG: activeTab =', activeTab);
-    console.log('DEBUG: isAdmin =', isAdmin);
-  }, [participants, activeTab, isAdmin]);
-
   if (!id) return <div>Invalid tournament</div>;
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'MANAGER';
@@ -239,6 +232,12 @@ const TournamentDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
     },
   });
+
+  // Debug logging - placed after all hooks are declared
+  React.useEffect(() => {
+    console.log('DEBUG: participants state =', participants);
+    console.log('DEBUG: activeTab =', activeTab);
+  }, [participants, activeTab]);
 
   if (tournamentLoading) {
     return <div className="text-center py-8">Loading tournament...</div>;
