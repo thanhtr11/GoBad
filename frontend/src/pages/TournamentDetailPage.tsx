@@ -202,10 +202,18 @@ const TournamentDetailPage: React.FC = () => {
   // Mutation: Initialize matches
   const initializeMatchesMutation = useMutation({
     mutationFn: async () => {
-      await api.post(`/tournaments/${id}/initialize`, {});
+      console.log('Initializing matches for tournament:', id);
+      const response = await api.post(`/tournaments/${id}/initialize`, {});
+      console.log('Initialize matches response:', response.data);
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Matches initialized successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+    },
+    onError: (error: any) => {
+      console.error('Error initializing matches:', error.response?.data || error.message);
+      alert(`Failed to initialize matches: ${error.response?.data?.error || error.message}`);
     },
   });
 

@@ -456,6 +456,8 @@ class TournamentService {
    */
   async initializeMatches(tournamentId: string) {
     try {
+      console.log('Service: Initializing matches for tournament:', tournamentId);
+      
       const tournament = await prisma.tournament.findUnique({
         where: { id: tournamentId },
       });
@@ -463,6 +465,7 @@ class TournamentService {
       if (!tournament) throw new Error('Tournament not found');
 
       const participants = await this.getParticipantsWithDetails(tournamentId);
+      console.log('Service: Found', participants.length, 'participants');
 
       if (participants.length < 2) {
         throw new Error('Need at least 2 participants to create matches');
@@ -474,6 +477,7 @@ class TournamentService {
       let matches: any[] = [];
 
       if (tournament.format === 'KNOCKOUT') {
+        console.log('Service: Creating knockout bracket');
         // Generate knockout bracket
         const bracket = this.generateKnockoutBracket(playerIds, playerNames);
 
@@ -496,6 +500,7 @@ class TournamentService {
           }
         }
       } else {
+        console.log('Service: Creating round-robin matches');
         // Generate round-robin matches
         for (let i = 0; i < playerIds.length; i++) {
           for (let j = i + 1; j < playerIds.length; j++) {
@@ -514,8 +519,10 @@ class TournamentService {
         }
       }
 
+      console.log('Service: Successfully created', matches.length, 'matches');
       return matches;
     } catch (error) {
+      console.error('Service: Error initializing matches:', error);
       if (error instanceof Error && error.message.includes('tournament_matches')) {
         console.warn('Tournament tables not yet created, skipping match initialization');
         return [];
