@@ -232,6 +232,14 @@ const TournamentDetailPage: React.FC = () => {
     (m) => !participants.some((p) => p.memberId === m.id)
   );
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Tournament:', tournament);
+    console.log('All Members:', allMembers);
+    console.log('Participants:', participants);
+    console.log('Available Members:', availableMembers);
+  }, [tournament, allMembers, participants, availableMembers]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
@@ -310,33 +318,39 @@ const TournamentDetailPage: React.FC = () => {
                   </button>
                 ) : (
                   <div className="space-y-3">
-                    <select
-                      value={selectedMemberId}
-                      onChange={(e) => setSelectedMemberId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded"
-                    >
-                      <option value="">Select a member...</option>
-                      {availableMembers.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.user?.username}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => selectedMemberId && addParticipantMutation.mutate(selectedMemberId)}
-                        disabled={!selectedMemberId || addParticipantMutation.isPending}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
-                      >
-                        Add
-                      </button>
-                      <button
-                        onClick={() => setShowAddParticipant(false)}
-                        className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                    {allMembers.length === 0 ? (
+                      <div className="text-gray-600 py-2">Loading members...</div>
+                    ) : (
+                      <>
+                        <select
+                          value={selectedMemberId}
+                          onChange={(e) => setSelectedMemberId(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded"
+                        >
+                          <option value="">Select a member...</option>
+                          {availableMembers.map((member) => (
+                            <option key={member.id} value={member.id}>
+                              {member.user?.username || member.name || 'Unknown'}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => selectedMemberId && addParticipantMutation.mutate(selectedMemberId)}
+                            disabled={!selectedMemberId || addParticipantMutation.isPending}
+                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+                          >
+                            Add
+                          </button>
+                          <button
+                            onClick={() => setShowAddParticipant(false)}
+                            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
