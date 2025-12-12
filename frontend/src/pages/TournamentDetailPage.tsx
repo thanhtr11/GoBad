@@ -132,48 +132,19 @@ const TournamentDetailPage: React.FC = () => {
     enabled: !!id && !!selectedPlayerForStats,
   });
 
-  // Fetch club members for adding participants (including guests checked in today)
+  // Fetch club members for adding participants
   const { data: allMembers = [] } = useQuery({
     queryKey: ['club-members-for-tournament', tournament?.clubId],
     queryFn: async () => {
       if (!tournament?.clubId) return [];
+      const response = await api.get(`/clubs/${tournament.clubId}/members`);
+      const members = response.data.members || [];
       
-      // Fetch all club members
-      const membersResponse = await api.get(`/clubs/${tournament.clubId}/members`);
-      const members = membersResponse.data.members || [];
-      
-      // Fetch today's attendance to get checked-in guests
-      const today = new Date().toISOString().split('T')[0];
-      let guestsList = [];
-      try {
-        const attendanceResponse = await api.get(`/attendance?clubId=${tournament.clubId}&date=${today}`);
-        // Filter for guests that were checked in today
-        guestsList = (attendanceResponse.data.attendance || [])
-          .filter((a: any) => a.type === 'GUEST' && a.checkedInById)
-          .map((a: any) => ({
-            id: a.id || `guest-${a.memberId}`,
-            user: { username: a.memberName || 'Guest' },
-            name: a.memberName || 'Guest'
-          }));
-      } catch (error) {
-        console.log('Could not fetch guests:', error);
-      }
-      
-      // Combine members and guests, filter out duplicates
-      const allMembersSet = new Map();
-      members.forEach((m: any) => {
-        allMembersSet.set(m.id, {
-          ...m,
-          user: m.user || { username: m.name || 'Unknown' }
-        });
-      });
-      guestsList.forEach((g: any) => {
-        if (!allMembersSet.has(g.id)) {
-          allMembersSet.set(g.id, g);
-        }
-      });
-      
-      return Array.from(allMembersSet.values());
+      // Ensure each member has user data
+      return members.map((m: any) => ({
+        ...m,
+        user: m.user || { username: m.name || 'Unknown Member' }
+      }));
     },
     enabled: !!tournament?.clubId,
   });
