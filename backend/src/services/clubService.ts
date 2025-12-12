@@ -197,6 +197,7 @@ export class ClubService {
           select: {
             id: true,
             email: true,
+            username: true,
             role: true,
           },
         },
