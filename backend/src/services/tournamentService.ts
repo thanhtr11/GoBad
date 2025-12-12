@@ -657,7 +657,42 @@ class TournamentService {
         }
       }
 
-      return updatedMatch;
+      // Return enriched match with player names and formatted scores
+      let player1Name = null;
+      let player2Name = null;
+      let winnerName = null;
+
+      if (updatedMatch.player1Id) {
+        const member = await prisma.member.findUnique({
+          where: { id: updatedMatch.player1Id },
+          include: { user: true },
+        });
+        player1Name = member?.user?.username || null;
+      }
+
+      if (updatedMatch.player2Id) {
+        const member = await prisma.member.findUnique({
+          where: { id: updatedMatch.player2Id },
+          include: { user: true },
+        });
+        player2Name = member?.user?.username || null;
+      }
+
+      if (updatedMatch.winnerId) {
+        const member = await prisma.member.findUnique({
+          where: { id: updatedMatch.winnerId },
+          include: { user: true },
+        });
+        winnerName = member?.user?.username || null;
+      }
+
+      return {
+        ...updatedMatch,
+        player1Name,
+        player2Name,
+        winnerName,
+        scores: updatedMatch.player1Score && updatedMatch.player2Score ? `${updatedMatch.player1Score}-${updatedMatch.player2Score}` : null,
+      };
     } catch (error) {
       if (error instanceof Error && error.message.includes('tournament')) {
         console.warn('Tournament tables not yet created or match not found');
