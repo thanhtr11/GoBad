@@ -165,6 +165,16 @@ const TournamentDetailPage: React.FC = () => {
     },
   });
 
+  // Mutation: Delete tournament
+  const deleteTournamentMutation = useMutation({
+    mutationFn: async () => {
+      await api.delete(`/tournaments/${id}`);
+    },
+    onSuccess: () => {
+      navigate(-1);
+    },
+  });
+
   // Mutation: Initialize matches
   const initializeMatchesMutation = useMutation({
     mutationFn: async () => {
@@ -232,7 +242,22 @@ const TournamentDetailPage: React.FC = () => {
         >
           ← Back
         </button>
-        <h1 className="text-4xl font-bold mb-2">🏆 {tournament.name}</h1>
+        <div className="flex justify-between items-start mb-4">
+          <h1 className="text-4xl font-bold">🏆 {tournament.name}</h1>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to delete this tournament?')) {
+                  deleteTournamentMutation.mutate();
+                }
+              }}
+              disabled={deleteTournamentMutation.isPending}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {deleteTournamentMutation.isPending ? 'Deleting...' : '🗑️ Delete'}
+            </button>
+          )}
+        </div>
         <div className="flex gap-4 items-center">
           <span className={`px-3 py-1 rounded text-white text-sm font-semibold ${
             tournament.status === 'UPCOMING' ? 'bg-blue-500' :
