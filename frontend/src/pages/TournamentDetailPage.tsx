@@ -222,6 +222,7 @@ const TournamentDetailPage: React.FC = () => {
     mutationFn: async (matchId: string) => {
       console.log('Recording match result - Match ID:', matchId, 'Scores:', scores);
       const response = await api.patch(`/tournaments/${id}/matches/${matchId}`, {
+        matchId,
         player1Score: parseInt(scores.player1),
         player2Score: parseInt(scores.player2),
       });
