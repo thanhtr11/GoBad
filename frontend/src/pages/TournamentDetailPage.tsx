@@ -92,11 +92,17 @@ const TournamentDetailPage: React.FC = () => {
   });
 
   // Fetch participants
-  const { data: participants = [], isLoading: participantsLoading } = useQuery({
+  const { data: participants = [], isLoading: participantsLoading, error: participantsError } = useQuery({
     queryKey: ['tournament-participants', id],
     queryFn: async () => {
-      const response = await api.get(`/tournaments/${id}/participants/details`);
-      return response.data.participants || [];
+      try {
+        const response = await api.get(`/tournaments/${id}/participants/details`);
+        console.log('Participants response:', response.data);
+        return response.data.participants || [];
+      } catch (error: any) {
+        console.error('Error fetching participants:', error.response?.data || error.message);
+        throw error;
+      }
     },
     enabled: !!id,
   });
@@ -365,6 +371,8 @@ const TournamentDetailPage: React.FC = () => {
 
             {participantsLoading ? (
               <div className="text-center py-8">Loading participants...</div>
+            ) : participantsError ? (
+              <div className="text-center py-8 text-red-600">Error loading participants: {participantsError.message}</div>
             ) : participants.length === 0 ? (
               <div className="text-center py-8 text-gray-600">No participants yet</div>
             ) : (
