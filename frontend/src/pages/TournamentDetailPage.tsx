@@ -452,55 +452,142 @@ const TournamentDetailPage: React.FC = () => {
         {activeTab === 'bracket' && (
           <div>
             {matches.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">
-                {tournament.status === 'UPCOMING' ? 'Initialize matches to see bracket' : 'No matches found'}
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🏆</div>
+                <div className="text-xl text-gray-600 font-semibold">
+                  {tournament.status === 'UPCOMING' ? 'Initialize matches to see bracket' : 'No matches found'}
+                </div>
               </div>
             ) : tournament.format === 'KNOCKOUT' ? (
               // Knockout bracket
-              <div className="space-y-6 overflow-x-auto">
+              <div className="space-y-8 overflow-x-auto">
                 {Object.entries(matchesByRound).map(([round, roundMatches]) => (
-                  <div key={round}>
-                    <h3 className="font-bold text-lg mb-3">Round {parseInt(round) + 1}</h3>
-                    <div className="space-y-2">
+                  <div key={round} className="border-l-4 border-blue-500 pl-6">
+                    <h3 className="font-bold text-2xl mb-6 text-blue-700">
+                      🎯 Round {parseInt(round) + 1}
+                      {parseInt(round) === 0 && roundMatches.length === 1 && ' (Final)'}
+                      {parseInt(round) === 0 && roundMatches.length === 2 && ' (Semifinals)'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {roundMatches.map((match) => (
-                        <div key={match.id} className="bg-gray-50 border border-gray-200 rounded p-3">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className={match.winnerId === match.player1Id ? 'font-bold' : ''}>
-                                {match.player1Name || 'TBD'}
+                        <div
+                          key={match.id}
+                          className={`rounded-lg border-2 overflow-hidden transition-all hover:shadow-lg ${
+                            match.status === 'COMPLETED'
+                              ? 'border-green-300 bg-green-50'
+                              : match.status === 'SCHEDULED'
+                              ? 'border-orange-300 bg-orange-50'
+                              : 'border-gray-300 bg-gray-50'
+                          }`}
+                        >
+                          <div className="p-4">
+                            {/* Status Badge */}
+                            <div className="flex justify-between items-center mb-3">
+                              <span
+                                className={`text-xs font-bold px-3 py-1 rounded-full ${
+                                  match.status === 'COMPLETED'
+                                    ? 'bg-green-200 text-green-800'
+                                    : match.status === 'SCHEDULED'
+                                    ? 'bg-orange-200 text-orange-800'
+                                    : 'bg-gray-200 text-gray-800'
+                                }`}
+                              >
+                                {match.status === 'COMPLETED' ? '✓ Done' : match.status === 'SCHEDULED' ? '⏱ Ready' : '⏳ Pending'}
                               </span>
-                              {match.status === 'COMPLETED' && (
-                                <span className="font-bold">{match.scores?.split('-')[0]}</span>
+                              {match.scheduledDate && (
+                                <span className="text-xs text-gray-500">
+                                  📅 {new Date(match.scheduledDate).toLocaleDateString()}
+                                </span>
                               )}
                             </div>
-                            <div className="border-b border-gray-300"></div>
-                            <div className="flex items-center justify-between">
-                              <span className={match.winnerId === match.player2Id ? 'font-bold' : ''}>
-                                {match.player2Name || 'TBD'}
-                              </span>
-                              {match.status === 'COMPLETED' && (
-                                <span className="font-bold">{match.scores?.split('-')[1]}</span>
+
+                            {/* Players */}
+                            <div className="space-y-3">
+                              {/* Player 1 */}
+                              <div className="flex items-center justify-between p-2 rounded hover:bg-white transition-colors">
+                                <span
+                                  className={`flex-1 font-semibold ${
+                                    match.winnerId === match.player1Id
+                                      ? 'text-green-700 text-lg font-bold'
+                                      : match.status === 'COMPLETED'
+                                      ? 'text-gray-500 line-through'
+                                      : 'text-gray-800'
+                                  }`}
+                                >
+                                  {match.player1Name || '?'}
+                                </span>
+                                {match.status === 'COMPLETED' && (
+                                  <span
+                                    className={`text-xl font-bold px-3 py-1 rounded ${
+                                      match.winnerId === match.player1Id ? 'bg-green-200 text-green-800' : 'text-gray-500'
+                                    }`}
+                                  >
+                                    {match.scores?.split('-')[0]}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="border-t border-gray-200"></div>
+
+                              {/* Player 2 */}
+                              <div className="flex items-center justify-between p-2 rounded hover:bg-white transition-colors">
+                                <span
+                                  className={`flex-1 font-semibold ${
+                                    match.winnerId === match.player2Id
+                                      ? 'text-green-700 text-lg font-bold'
+                                      : match.status === 'COMPLETED'
+                                      ? 'text-gray-500 line-through'
+                                      : 'text-gray-800'
+                                  }`}
+                                >
+                                  {match.player2Name || '?'}
+                                </span>
+                                {match.status === 'COMPLETED' && (
+                                  <span
+                                    className={`text-xl font-bold px-3 py-1 rounded ${
+                                      match.winnerId === match.player2Id ? 'bg-green-200 text-green-800' : 'text-gray-500'
+                                    }`}
+                                  >
+                                    {match.scores?.split('-')[1]}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Schedule & Action */}
+                            <div className="mt-4 pt-3 border-t border-gray-200">
+                              {match.scheduledDate && match.court && (
+                                <div className="text-xs text-gray-600 mb-3 flex items-center gap-2">
+                                  <span>🏟️ {match.court}</span>
+                                </div>
+                              )}
+                              {match.status === 'SCHEDULED' && isAdmin && (
+                                <button
+                                  onClick={() => {
+                                    setRecordingMatch(match.id);
+                                    setScores({ player1: '', player2: '' });
+                                  }}
+                                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                                >
+                                  📊 Record Result
+                                </button>
+                              )}
+                              {match.status === 'COMPLETED' && isAdmin && (
+                                <button
+                                  onClick={() => {
+                                    setRecordingMatch(match.id);
+                                    setScores({
+                                      player1: match.scores?.split('-')[0] || '',
+                                      player2: match.scores?.split('-')[1] || '',
+                                    });
+                                  }}
+                                  className="w-full bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-500 transition-colors text-sm"
+                                >
+                                  ✏️ Edit Result
+                                </button>
                               )}
                             </div>
                           </div>
-                          <div className="text-sm text-gray-600 mt-2">
-                            {match.scheduledDate ? (
-                              <>🏟️ {match.court || 'Court TBD'} • 📅 {new Date(match.scheduledDate).toLocaleDateString()}</>
-                            ) : (
-                              <span className="text-gray-400">Not scheduled</span>
-                            )}
-                          </div>
-                          {match.status === 'SCHEDULED' && isAdmin && (
-                            <button
-                              onClick={() => {
-                                setRecordingMatch(match.id);
-                                setScores({ player1: '', player2: '' });
-                              }}
-                              className="w-full mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-                            >
-                              Record Result
-                            </button>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -511,37 +598,80 @@ const TournamentDetailPage: React.FC = () => {
               // Round-robin matches
               <div className="space-y-3">
                 {matches.map((match) => (
-                  <div key={match.id} className="bg-gray-50 border border-gray-200 rounded p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex-1">
-                        <span className={match.winnerId === match.player1Id ? 'font-bold' : ''}>
-                          {match.player1Name || 'TBD'}
-                        </span>
-                        <span className="mx-2 text-gray-600">vs</span>
-                        <span className={match.winnerId === match.player2Id ? 'font-bold' : ''}>
-                          {match.player2Name || 'TBD'}
+                  <div
+                    key={match.id}
+                    className={`rounded-lg border-l-4 p-4 transition-all hover:shadow-md ${
+                      match.status === 'COMPLETED'
+                        ? 'border-l-green-500 bg-green-50'
+                        : match.status === 'SCHEDULED'
+                        ? 'border-l-orange-500 bg-orange-50'
+                        : 'border-l-gray-400 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      {/* Players */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`font-semibold ${
+                              match.winnerId === match.player1Id ? 'text-green-700 text-lg font-bold' : 'text-gray-800'
+                            }`}
+                          >
+                            {match.player1Name || '?'}
+                          </span>
+                          <span className="text-gray-400">vs</span>
+                          <span
+                            className={`font-semibold ${
+                              match.winnerId === match.player2Id ? 'text-green-700 text-lg font-bold' : 'text-gray-800'
+                            }`}
+                          >
+                            {match.player2Name || '?'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Score & Status */}
+                      <div className="flex items-center gap-4">
+                        {match.status === 'COMPLETED' && (
+                          <div className="bg-white rounded-lg px-4 py-2 border border-green-200">
+                            <span className="text-2xl font-bold text-green-700">{match.scores}</span>
+                          </div>
+                        )}
+                        <span
+                          className={`text-xs font-bold px-3 py-1 rounded-full ${
+                            match.status === 'COMPLETED'
+                              ? 'bg-green-200 text-green-800'
+                              : match.status === 'SCHEDULED'
+                              ? 'bg-orange-200 text-orange-800'
+                              : 'bg-gray-200 text-gray-800'
+                          }`}
+                        >
+                          {match.status === 'COMPLETED' ? '✓' : match.status === 'SCHEDULED' ? '⏱' : '⏳'}
                         </span>
                       </div>
-                      {match.status === 'COMPLETED' && (
-                        <span className="font-bold text-lg">{match.scores}</span>
-                      )}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">
-                      {match.scheduledDate ? (
-                        <>🏟️ {match.court || 'Court TBD'} • 📅 {new Date(match.scheduledDate).toLocaleDateString()}</>
-                      ) : (
-                        <span className="text-gray-400">Not scheduled</span>
-                      )}
-                    </div>
+
+                    {/* Schedule Info */}
+                    {(match.scheduledDate || match.court) && (
+                      <div className="text-sm text-gray-600 mt-3 pt-3 border-t border-gray-200">
+                        {match.scheduledDate && match.court && (
+                          <>
+                            🏟️ {match.court} • 📅 {new Date(match.scheduledDate).toLocaleDateString()}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Action Button */}
                     {match.status === 'SCHEDULED' && isAdmin && (
                       <button
                         onClick={() => {
                           setRecordingMatch(match.id);
                           setScores({ player1: '', player2: '' });
                         }}
-                        className="w-full bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                        className="w-full mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
                       >
-                        Record Result
+                        📊 Record Result
                       </button>
                     )}
                   </div>
