@@ -232,14 +232,6 @@ const TournamentDetailPage: React.FC = () => {
     (m) => !participants.some((p) => p.memberId === m.id)
   );
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('Tournament:', tournament);
-    console.log('All Members:', allMembers);
-    console.log('Participants:', participants);
-    console.log('Available Members:', availableMembers);
-  }, [tournament, allMembers, participants, availableMembers]);
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
