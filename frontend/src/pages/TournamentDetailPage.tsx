@@ -631,6 +631,7 @@ const TournamentDetailPage: React.FC = () => {
                       <th className="px-4 py-2 text-center">L</th>
                       <th className="px-4 py-2 text-center">PF</th>
                       <th className="px-4 py-2 text-center">PA</th>
+                      <th className="px-4 py-2 text-center">Diff</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -643,6 +644,9 @@ const TournamentDetailPage: React.FC = () => {
                         <td className="px-4 py-2 text-center text-red-600 font-bold">{standing.losses}</td>
                         <td className="px-4 py-2 text-center">{standing.pointsFor}</td>
                         <td className="px-4 py-2 text-center">{standing.pointsAgainst}</td>
+                        <td className="px-4 py-2 text-center font-semibold" style={{color: (standing.pointsFor - standing.pointsAgainst) > 0 ? '#10b981' : (standing.pointsFor - standing.pointsAgainst) < 0 ? '#ef4444' : '#6b7280'}}>
+                          {standing.pointsFor - standing.pointsAgainst > 0 ? '+' : ''}{standing.pointsFor - standing.pointsAgainst}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

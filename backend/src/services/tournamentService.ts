@@ -773,12 +773,12 @@ class TournamentService {
       console.log('Service: Getting standings for tournament:', tournamentId);
       const standings = await prisma.tournamentStanding.findMany({
         where: { tournamentId },
-        orderBy: [{ wins: 'desc' }, { pointsFor: 'desc' }],
+        orderBy: [{ wins: 'desc' }, { pointsFor: 'desc' }, { pointsAgainst: 'asc' }],
       });
 
       console.log('Service: Found', standings.length, 'standing records');
 
-      // Enrich with member/user details
+      // Enrich with member/user details and calculate point differential
       const enriched = await Promise.all(
         standings.map(async (standing) => {
           const member = await prisma.member.findUnique({
@@ -786,15 +786,25 @@ class TournamentService {
             include: { user: true },
           });
 
+          const pointDifferential = standing.pointsFor - standing.pointsAgainst;
+
           return {
             ...standing,
             memberName: member?.user?.username || 'Unknown',
+            pointDifferential,
           };
         })
       );
 
+      // Sort by: wins (desc), point differential (desc), pointsFor (desc)
+      const sorted = enriched.sort((a, b) => {
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        if (b.pointDifferential !== a.pointDifferential) return b.pointDifferential - a.pointDifferential;
+        return b.pointsFor - a.pointsFor;
+      });
+
       // Calculate ranking
-      const result = enriched.map((standing, index) => ({
+      const result = sorted.map((standing, index) => ({
         ...standing,
         ranking: index + 1,
       }));
