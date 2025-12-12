@@ -294,3 +294,30 @@ export async function checkMatchAccess(req: Request, res: Response, next: NextFu
     });
   }
 }
+/**
+ * Check if user is SUPER_ADMIN or MANAGER
+ * Used for operations that only admins/managers can perform
+ */
+export async function requireAdminOrManager(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Authentication required.',
+    });
+    return;
+  }
+
+  if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'MANAGER') {
+    res.status(403).json({
+      error: 'Forbidden',
+      message: 'Only super admins and managers can perform this action.',
+    });
+    return;
+  }
+
+  next();
+}

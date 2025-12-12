@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { requireAdminOrManager } from '../middleware/permissions';
 import tournamentController from '../controllers/tournamentController';
 
 const router = Router();
@@ -129,7 +130,7 @@ router.post('/:id/match-result', (req, res) =>
  * DELETE /api/tournaments/:id
  * Delete tournament (admin only)
  */
-router.delete('/:id', (req, res) =>
+router.delete('/:id', requireAdminOrManager, (req, res) =>
   tournamentController.deleteTournament(req, res)
 );
 
