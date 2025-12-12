@@ -71,7 +71,7 @@ const TournamentDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'participants' | 'bracket' | 'standings' | 'schedule' | 'stats'>('participants');
+  const [activeTab, setActiveTab] = useState<'participants' | 'bracket' | 'standings' | 'stats'>('participants');
   const [recordingMatch, setRecordingMatch] = useState<string | null>(null);
   const [scores, setScores] = useState({ player1: '', player2: '' });
   const [showAddParticipant, setShowAddParticipant] = useState(false);
@@ -321,7 +321,7 @@ const TournamentDetailPage: React.FC = () => {
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
         <div className="flex gap-4 overflow-x-auto">
-          {['participants', 'bracket', 'standings', 'schedule', 'stats'].map((tab) => (
+          {['participants', 'bracket', 'standings', 'stats'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
@@ -332,9 +332,8 @@ const TournamentDetailPage: React.FC = () => {
               }`}
             >
               {tab === 'participants' && '👥 Participants'}
-              {tab === 'bracket' && '🎯 Bracket'}
+              {tab === 'bracket' && '🎯 Bracket & Schedule'}
               {tab === 'standings' && '📊 Standings'}
-              {tab === 'schedule' && '📅 Schedule'}
               {tab === 'stats' && '📈 Stats'}
             </button>
           ))}
@@ -480,6 +479,13 @@ const TournamentDetailPage: React.FC = () => {
                               )}
                             </div>
                           </div>
+                          <div className="text-sm text-gray-600 mt-2">
+                            {match.scheduledDate ? (
+                              <>🏟️ {match.court || 'Court TBD'} • 📅 {new Date(match.scheduledDate).toLocaleDateString()}</>
+                            ) : (
+                              <span className="text-gray-400">Not scheduled</span>
+                            )}
+                          </div>
                           {match.status === 'SCHEDULED' && isAdmin && (
                             <button
                               onClick={() => {
@@ -514,6 +520,13 @@ const TournamentDetailPage: React.FC = () => {
                       </div>
                       {match.status === 'COMPLETED' && (
                         <span className="font-bold text-lg">{match.scores}</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">
+                      {match.scheduledDate ? (
+                        <>🏟️ {match.court || 'Court TBD'} • 📅 {new Date(match.scheduledDate).toLocaleDateString()}</>
+                      ) : (
+                        <span className="text-gray-400">Not scheduled</span>
                       )}
                     </div>
                     {match.status === 'SCHEDULED' && isAdmin && (
@@ -629,32 +642,6 @@ const TournamentDetailPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Schedule Tab */}
-        {activeTab === 'schedule' && (
-          <div className="space-y-3">
-            {matches.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">No matches to schedule</div>
-            ) : (
-              matches.map((match) => (
-                <div key={match.id} className="bg-gray-50 border border-gray-200 rounded p-3">
-                  <div className="mb-2">
-                    <span className="font-semibold">{match.player1Name || 'TBD'}</span>
-                    <span className="mx-2 text-gray-600">vs</span>
-                    <span className="font-semibold">{match.player2Name || 'TBD'}</span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {match.scheduledDate ? (
-                      <>Court: {match.court || 'TBD'} • Date: {new Date(match.scheduledDate).toLocaleDateString()}</>
-                    ) : (
-                      'Not scheduled'
-                    )}
-                  </div>
-                </div>
-              ))
             )}
           </div>
         )}
