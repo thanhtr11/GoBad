@@ -220,16 +220,24 @@ const TournamentDetailPage: React.FC = () => {
   // Mutation: Record match result
   const recordMatchMutation = useMutation({
     mutationFn: async (matchId: string) => {
-      await api.patch(`/tournaments/${id}/matches/${matchId}`, {
+      console.log('Recording match result - Match ID:', matchId, 'Scores:', scores);
+      const response = await api.patch(`/tournaments/${id}/matches/${matchId}`, {
         player1Score: parseInt(scores.player1),
         player2Score: parseInt(scores.player2),
       });
+      console.log('Record match response:', response.data);
+      return response.data;
     },
     onSuccess: () => {
+      console.log('Match result saved successfully');
       queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
       queryClient.invalidateQueries({ queryKey: ['tournament-standings', id] });
       setRecordingMatch(null);
       setScores({ player1: '', player2: '' });
+    },
+    onError: (error: any) => {
+      console.error('Error recording match:', error.response?.data || error.message);
+      alert(`Failed to save match result: ${error.response?.data?.error || error.message}`);
     },
   });
 
@@ -555,7 +563,11 @@ const TournamentDetailPage: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => recordMatchMutation.mutate(recordingMatch)}
+                        onClick={() => {
+                          console.log('Save button clicked - Scores:', scores, 'Match ID:', recordingMatch);
+                          console.log('Validation - player1:', scores.player1, 'player2:', scores.player2);
+                          recordMatchMutation.mutate(recordingMatch);
+                        }}
                         disabled={!scores.player1 || !scores.player2 || recordMatchMutation.isPending}
                         className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 font-semibold"
                       >
