@@ -118,13 +118,15 @@ const TournamentDetailPage: React.FC = () => {
   });
 
   // Fetch standings
-  const { data: standings = [] } = useQuery({
+  const { data: standings = [], isLoading: standingsLoading } = useQuery({
     queryKey: ['tournament-standings', id],
     queryFn: async () => {
+      console.log('Fetching standings for tournament:', id);
       const response = await api.get(`/tournaments/${id}/standings`);
+      console.log('Standings response:', response.data);
       return response.data.standings || [];
     },
-    enabled: !!id && tournament?.format === 'ROUND_ROBIN',
+    enabled: !!id,
   });
 
   // Fetch player stats
@@ -259,7 +261,9 @@ const TournamentDetailPage: React.FC = () => {
   React.useEffect(() => {
     console.log('DEBUG: participants state =', participants);
     console.log('DEBUG: activeTab =', activeTab);
-  }, [participants, activeTab]);
+    console.log('DEBUG: standings state =', standings);
+    console.log('DEBUG: tournament format =', tournament?.format);
+  }, [participants, activeTab, standings, tournament]);
 
   if (tournamentLoading) {
     return <div className="text-center py-8">Loading tournament...</div>;
@@ -607,9 +611,11 @@ const TournamentDetailPage: React.FC = () => {
         {/* Standings Tab */}
         {activeTab === 'standings' && (
           <div>
-            {standings.length === 0 ? (
+            {standingsLoading ? (
+              <div className="text-center py-8">Loading standings...</div>
+            ) : standings.length === 0 ? (
               <div className="text-center py-8 text-gray-600">
-                {tournament.format === 'ROUND_ROBIN' && matches.length > 0
+                {matches.length > 0
                   ? 'Complete matches to see standings'
                   : 'No standings data available'}
               </div>

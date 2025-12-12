@@ -768,10 +768,13 @@ class TournamentService {
    */
   async getTournamentStandings(tournamentId: string) {
     try {
+      console.log('Service: Getting standings for tournament:', tournamentId);
       const standings = await prisma.tournamentStanding.findMany({
         where: { tournamentId },
         orderBy: [{ wins: 'desc' }, { pointsFor: 'desc' }],
       });
+
+      console.log('Service: Found', standings.length, 'standing records');
 
       // Enrich with member/user details
       const enriched = await Promise.all(
@@ -789,15 +792,20 @@ class TournamentService {
       );
 
       // Calculate ranking
-      return enriched.map((standing, index) => ({
+      const result = enriched.map((standing, index) => ({
         ...standing,
         ranking: index + 1,
       }));
+
+      console.log('Service: Returning', result.length, 'enriched standings');
+      return result;
     } catch (error) {
       // If tournament_standings table doesn't exist yet, return empty array
       if (error instanceof Error && error.message.includes('tournament_standings')) {
+        console.warn('Service: tournament_standings table not found, returning empty');
         return [];
       }
+      console.error('Service: Error getting standings:', error);
       throw error;
     }
   }
