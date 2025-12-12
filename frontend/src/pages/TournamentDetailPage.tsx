@@ -140,10 +140,10 @@ const TournamentDetailPage: React.FC = () => {
       const response = await api.get(`/clubs/${tournament.clubId}/members`);
       const members = response.data.members || [];
       
-      // Ensure each member has user data
+      // Ensure each member has proper name data
       return members.map((m: any) => ({
         ...m,
-        user: m.user || { username: m.name || 'Unknown Member' }
+        user: m.user || { name: m.name || 'Unknown Member' }
       }));
     },
     enabled: !!tournament?.clubId,
