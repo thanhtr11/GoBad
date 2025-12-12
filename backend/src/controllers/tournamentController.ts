@@ -233,14 +233,23 @@ class TournamentController {
         return;
       }
 
+      console.log('Controller: Adding participant to tournament', { 
+        tournamentId: req.params.id, 
+        memberId: validation.data.memberId 
+      });
+
       const participant = await tournamentService.addParticipant(
         req.params.id,
         validation.data.memberId,
         validation.data.seedRank
       );
 
+      console.log('Controller: Participant added:', participant);
+
       // After adding, fetch all participants to return the updated list
       const participants = await tournamentService.getParticipantsWithDetails(req.params.id);
+
+      console.log('Controller: Updated participants list:', participants);
 
       res.status(201).json({ participant, participants });
     } catch (error) {

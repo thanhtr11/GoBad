@@ -374,6 +374,7 @@ class TournamentService {
    */
   async addParticipant(tournamentId: string, memberId: string, seedRank?: number) {
     try {
+      console.log('Service: Adding participant', { tournamentId, memberId, seedRank });
       return await prisma.tournamentParticipant.create({
         data: {
           tournamentId,
@@ -389,6 +390,7 @@ class TournamentService {
         },
       });
     } catch (error) {
+      console.error('Service: Error adding participant:', error);
       if (error instanceof Error && error.message.includes('tournament_participants')) {
         console.warn('Tournament tables not yet created, skipping participant creation');
         return null;
