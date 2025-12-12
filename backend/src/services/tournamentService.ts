@@ -35,6 +35,7 @@ class TournamentService {
   generateKnockoutBracket(playerIds: string[], playerNames: Map<string, string>): Bracket {
     // Shuffle players for random matchups
     const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+    console.log('Knockout: Shuffled players:', shuffled.map(id => playerNames.get(id)));
 
     // Pad to power of 2 (for balanced bracket)
     let paddedPlayers = [...shuffled];
@@ -42,6 +43,8 @@ class TournamentService {
     while (targetSize < paddedPlayers.length) {
       targetSize *= 2;
     }
+    console.log('Knockout: Original player count:', paddedPlayers.length, '→ Padded to:', targetSize);
+    
     while (paddedPlayers.length < targetSize) {
       paddedPlayers.push('');
     }
@@ -62,6 +65,7 @@ class TournamentService {
       });
     }
 
+    console.log('Knockout: First round has', firstRound.length, 'matches');
     rounds.push(firstRound);
 
     // Create subsequent rounds (placeholders)
@@ -77,11 +81,13 @@ class TournamentService {
           position: i,
         });
       }
+      console.log('Knockout: Round', roundNum, 'has', nextRound.length, 'matches');
       rounds.push(nextRound);
       currentRoundSize = currentRoundSize / 2;
       roundNum++;
     }
 
+    console.log('Knockout: Total rounds:', rounds.length, '(including final)');
     return { rounds };
   }
 
@@ -484,6 +490,7 @@ class TournamentService {
         // Create matches in database for each bracket node
         for (let roundNum = 0; roundNum < bracket.rounds.length; roundNum++) {
           const round = bracket.rounds[roundNum];
+          console.log('Service: Creating round', roundNum, 'with', round.length, 'matches');
           for (let position = 0; position < round.length; position++) {
             const node = round[position];
             const match = await prisma.tournamentMatch.create({
@@ -496,6 +503,13 @@ class TournamentService {
                 status: 'SCHEDULED',
               },
             });
+            if (node.player1Id && node.player2Id) {
+              console.log(`  Match ${roundNum}-${position}: ${playerNames.get(node.player1Id)} vs ${playerNames.get(node.player2Id)}`);
+            } else if (node.player1Id || node.player2Id) {
+              console.log(`  Match ${roundNum}-${position}: ${playerNames.get(node.player1Id || node.player2Id)} (waiting for opponent)`);
+            } else {
+              console.log(`  Match ${roundNum}-${position}: TBD vs TBD`);
+            }
             matches.push(match);
           }
         }
@@ -630,6 +644,8 @@ class TournamentService {
 
       // For knockout, advance winner to next round
       if (tournament.format === 'KNOCKOUT' && match.round < 10) {
+        console.log('Knockout: Advancing winner from round', match.round, 'position', match.position);
+        
         const nextRoundMatches = await prisma.tournamentMatch.findMany({
           where: {
             tournamentId,
@@ -638,24 +654,34 @@ class TournamentService {
           orderBy: { position: 'asc' },
         });
 
+        console.log('Knockout: Found', nextRoundMatches.length, 'matches in next round');
+
         if (nextRoundMatches.length > 0) {
           const nextMatchIndex = Math.floor(match.position / 2);
+          console.log('Knockout: Next match index:', nextMatchIndex);
+          
           if (nextMatchIndex < nextRoundMatches.length) {
             const nextMatch = nextRoundMatches[nextMatchIndex];
             if (match.position % 2 === 0) {
               // Advance to player1 slot
+              console.log('Knockout: Advancing winner to player1 slot of next match');
               await prisma.tournamentMatch.update({
                 where: { id: nextMatch.id },
                 data: { player1Id: winnerId },
               });
             } else {
               // Advance to player2 slot
+              console.log('Knockout: Advancing winner to player2 slot of next match');
               await prisma.tournamentMatch.update({
                 where: { id: nextMatch.id },
                 data: { player2Id: winnerId },
               });
             }
+          } else {
+            console.warn('Knockout: Next match index', nextMatchIndex, 'exceeds available matches');
           }
+        } else {
+          console.log('Knockout: No matches in next round (final match reached)');
         }
       }
 
