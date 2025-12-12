@@ -571,59 +571,62 @@ class TournamentService {
         },
       });
 
-      // Update standings
-      if (winnerId) {
+      // Update standings for player1
+      if (match.player1Id) {
         await prisma.tournamentStanding.upsert({
           where: {
             tournamentId_memberId: {
               tournamentId,
-              memberId: winnerId,
+              memberId: match.player1Id,
             },
           },
           update: {
             matchesPlayed: { increment: 1 },
-            wins: { increment: 1 },
-            pointsFor: { increment: Math.max(player1Score, player2Score) },
-            pointsAgainst: { increment: Math.min(player1Score, player2Score) },
+            wins: { increment: player1Score > player2Score ? 1 : 0 },
+            losses: { increment: player1Score > player2Score ? 0 : 1 },
+            pointsFor: { increment: player1Score },
+            pointsAgainst: { increment: player2Score },
           },
           create: {
             tournamentId,
-            memberId: winnerId,
+            memberId: match.player1Id,
             matchesPlayed: 1,
-            wins: 1,
-            losses: 0,
-            pointsFor: Math.max(player1Score, player2Score),
-            pointsAgainst: Math.min(player1Score, player2Score),
+            wins: player1Score > player2Score ? 1 : 0,
+            losses: player1Score > player2Score ? 0 : 1,
+            pointsFor: player1Score,
+            pointsAgainst: player2Score,
             ranking: 0,
           },
         });
+      }
 
-        if (loser) {
-          await prisma.tournamentStanding.upsert({
-            where: {
-              tournamentId_memberId: {
-                tournamentId,
-                memberId: loser,
-              },
-            },
-            update: {
-              matchesPlayed: { increment: 1 },
-              losses: { increment: 1 },
-              pointsFor: { increment: Math.min(player1Score, player2Score) },
-              pointsAgainst: { increment: Math.max(player1Score, player2Score) },
-            },
-            create: {
+      // Update standings for player2
+      if (match.player2Id) {
+        await prisma.tournamentStanding.upsert({
+          where: {
+            tournamentId_memberId: {
               tournamentId,
-              memberId: loser,
-              matchesPlayed: 1,
-              wins: 0,
-              losses: 1,
-              pointsFor: Math.min(player1Score, player2Score),
-              pointsAgainst: Math.max(player1Score, player2Score),
-              ranking: 0,
+              memberId: match.player2Id,
             },
-          });
-        }
+          },
+          update: {
+            matchesPlayed: { increment: 1 },
+            wins: { increment: player2Score > player1Score ? 1 : 0 },
+            losses: { increment: player2Score > player1Score ? 0 : 1 },
+            pointsFor: { increment: player2Score },
+            pointsAgainst: { increment: player1Score },
+          },
+          create: {
+            tournamentId,
+            memberId: match.player2Id,
+            matchesPlayed: 1,
+            wins: player2Score > player1Score ? 1 : 0,
+            losses: player2Score > player1Score ? 0 : 1,
+            pointsFor: player2Score,
+            pointsAgainst: player1Score,
+            ranking: 0,
+          },
+        });
       }
 
       // For knockout, advance winner to next round
