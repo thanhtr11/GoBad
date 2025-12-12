@@ -239,7 +239,10 @@ class TournamentController {
         validation.data.seedRank
       );
 
-      res.status(201).json({ participant });
+      // After adding, fetch all participants to return the updated list
+      const participants = await tournamentService.getParticipantsWithDetails(req.params.id);
+
+      res.status(201).json({ participant, participants });
     } catch (error) {
       console.error('Error adding participant:', error);
       res.status(500).json({ error: 'Failed to add participant' });

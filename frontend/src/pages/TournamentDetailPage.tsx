@@ -166,8 +166,9 @@ const TournamentDetailPage: React.FC = () => {
       console.log('Add participant response:', response.data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       console.log('Successfully added participant');
+      // Refetch the participants list to get the fresh data
       queryClient.invalidateQueries({ queryKey: ['tournament-participants', id] });
       setSelectedMemberId('');
       setShowAddParticipant(false);
