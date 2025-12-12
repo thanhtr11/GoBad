@@ -140,7 +140,7 @@ const TournamentDetailPage: React.FC = () => {
       const response = await api.get(`/clubs/${tournament.clubId}/members`);
       return response.data.members || [];
     },
-    enabled: !!tournament?.clubId && showAddParticipant,
+    enabled: !!tournament?.clubId,
   });
 
   // Mutation: Add participant
